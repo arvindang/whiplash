@@ -15,19 +15,23 @@ struct TaskRowView: View {
     var body: some View {
         ZStack {
             // Swipe left background — mark done (green)
-            HStack {
-                Spacer()
-                Image(systemName: "checkmark.circle.fill")
-                    .foregroundStyle(.green)
-                    .padding(.trailing, 16)
+            if offset < 0 {
+                HStack {
+                    Spacer()
+                    Image(systemName: "checkmark.circle.fill")
+                        .foregroundStyle(.green)
+                        .padding(.trailing, 16)
+                }
             }
 
             // Swipe right background — pause/resume (orange)
-            HStack {
-                Image(systemName: task.status == .paused ? "play.circle.fill" : "pause.circle.fill")
-                    .foregroundStyle(.orange)
-                    .padding(.leading, 16)
-                Spacer()
+            if offset > 0 {
+                HStack {
+                    Image(systemName: task.status == .paused ? "play.circle.fill" : "pause.circle.fill")
+                        .foregroundStyle(.orange)
+                        .padding(.leading, 16)
+                    Spacer()
+                }
             }
 
             // Main row content
@@ -54,6 +58,12 @@ struct TaskRowView: View {
 
                 HStack(spacing: 6) {
                     contextPill
+                    if let branch = task.gitBranch, branch != "HEAD", !branch.isEmpty {
+                        Text(branch)
+                            .font(.system(size: 9, weight: .medium, design: .monospaced))
+                            .foregroundStyle(.secondary)
+                            .lineLimit(1)
+                    }
                     Text(TimeFormatter.relativeTime(from: task.updatedAt))
                         .font(.system(size: 10, design: .monospaced))
                         .foregroundStyle(.tertiary)
@@ -72,7 +82,8 @@ struct TaskRowView: View {
             }
         }
         .padding(.vertical, 2)
-        .background(.background.opacity(0.001)) // hit area
+        .padding(.horizontal, 4)
+        .background(.ultraThinMaterial) // opaque background hides swipe indicators
     }
 
     private var contextPill: some View {

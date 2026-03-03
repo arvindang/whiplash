@@ -70,12 +70,81 @@ final class TaskStore {
         saveTasks()
     }
 
-    func addAutoDetectedTask(title: String, context: String) {
-        // Don't add duplicates
-        guard !tasks.contains(where: { $0.title == title && $0.isAutoDetected }) else { return }
-        let task = WhiplashTask(title: title, context: context, isAutoDetected: true)
-        tasks.append(task)
-        saveTasks()
+    func reconcileClaudeSessions(_ sessions: [ClaudeSession]) {
+        var changed = false
+
+        let sessionMap = Dictionary(sessions.map { ($0.sessionId, $0) }, uniquingKeysWith: { _, last in last })
+
+        // 1. Create tasks for running sessions without existing tasks
+        for session in sessions where session.isProcessRunning {
+            if !tasks.contains(where: { $0.sessionId == session.sessionId }) {
+                var title = session.projectName
+                if let branch = session.gitBranch, branch != "HEAD", !branch.isEmpty {
+                    title += " (\(branch))"
+                }
+                let task = WhiplashTask(
+                    title: title,
+                    context: "Claude Code",
+                    isAutoDetected: true,
+                    sessionId: session.sessionId,
+                    projectPath: session.projectPath,
+                    gitBranch: session.gitBranch,
+                    pid: session.pid
+                )
+                tasks.append(task)
+                changed = true
+            }
+        }
+
+        // 2. Update existing tasks / 3. Mark done
+        for i in tasks.indices {
+            guard tasks[i].isAutoDetected, let sid = tasks[i].sessionId else { continue }
+
+            if let session = sessionMap[sid] {
+                // Update metadata
+                if tasks[i].pid != session.pid {
+                    tasks[i].pid = session.pid
+                    changed = true
+                }
+                if tasks[i].gitBranch != session.gitBranch {
+                    tasks[i].gitBranch = session.gitBranch
+                    changed = true
+                }
+
+                if session.isProcessRunning {
+                    // Revive if was done but session is running again
+                    if tasks[i].status == .done {
+                        tasks[i].status = .active
+                        tasks[i].updatedAt = Date()
+                        changed = true
+                    }
+                } else {
+                    // Process not running — mark done
+                    if tasks[i].status != .done {
+                        tasks[i].status = .done
+                        tasks[i].updatedAt = Date()
+                        changed = true
+                    }
+                }
+            } else {
+                // Session not in scan results at all — mark done
+                if tasks[i].status != .done {
+                    tasks[i].status = .done
+                    tasks[i].updatedAt = Date()
+                    changed = true
+                }
+            }
+        }
+
+        // 4. Auto-dismiss done auto-detected tasks older than 5 minutes
+        let cutoff = Date().addingTimeInterval(-300)
+        let beforeCount = tasks.count
+        tasks.removeAll { task in
+            task.isAutoDetected && task.status == .done && task.updatedAt < cutoff
+        }
+        if tasks.count != beforeCount { changed = true }
+
+        if changed { saveTasks() }
     }
 
     func loadTasks() {

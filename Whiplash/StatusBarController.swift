@@ -7,8 +7,9 @@ final class StatusBarController {
     private let popover: NSPopover
     private var clickMonitor: Any?
     private let hotKeyManager = HotKeyManager()
-    private let processScanner = ProcessScanner()
+    private let sessionScanner = SessionScanner()
     private var scanTimer: Timer?
+    private var historyWatcher: FileWatcher?
     private let taskStore = TaskStore.shared
 
     init() {
@@ -18,7 +19,7 @@ final class StatusBarController {
         setupButton()
         setupPopover()
         setupHotKey()
-        startProcessScanning()
+        startSessionScanning()
     }
 
     private func setupButton() {
@@ -47,22 +48,33 @@ final class StatusBarController {
         }
     }
 
-    private func startProcessScanning() {
-        scanTimer = Timer.scheduledTimer(withTimeInterval: 30, repeats: true) { [weak self] _ in
+    private func startSessionScanning() {
+        // Initial scan on startup
+        performScan()
+
+        // Watch history.jsonl for immediate detection of new prompts
+        let historyURL = URL(fileURLWithPath: NSHomeDirectory())
+            .appendingPathComponent(".claude/history.jsonl")
+        historyWatcher = FileWatcher(url: historyURL) { [weak self] in
+            Task { @MainActor [weak self] in
+                self?.performScan()
+            }
+        }
+
+        // Timer-based polling at 15s for detecting process exits
+        scanTimer = Timer.scheduledTimer(withTimeInterval: 15, repeats: true) { [weak self] _ in
             guard let self else { return }
             Task { @MainActor [weak self] in
-                guard let self else { return }
-                let processes = await self.processScanner.scanForClaudeProcesses()
-                for process in processes {
-                    let title = process.workingDirectory.isEmpty
-                        ? "Claude (pid \(process.pid))"
-                        : URL(fileURLWithPath: process.workingDirectory).lastPathComponent
-                    self.taskStore.addAutoDetectedTask(
-                        title: title,
-                        context: "Claude Code"
-                    )
-                }
+                self?.performScan()
             }
+        }
+    }
+
+    private func performScan() {
+        Task { @MainActor [weak self] in
+            guard let self else { return }
+            let sessions = await self.sessionScanner.scanForSessions()
+            self.taskStore.reconcileClaudeSessions(sessions)
         }
     }
 
