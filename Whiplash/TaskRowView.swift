@@ -38,6 +38,13 @@ struct TaskRowView: View {
             rowContent
                 .offset(x: offset)
                 .gesture(swipeGesture)
+                .background(
+                    TrackpadSwipeDetector(
+                        offset: $offset,
+                        onSwipeLeft: { onAction(.markDone) },
+                        onSwipeRight: { onAction(.togglePause) }
+                    )
+                )
         }
         .padding(.horizontal, 10)
         .padding(.vertical, 6)
