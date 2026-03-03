@@ -3,11 +3,15 @@ import SwiftUI
 struct TaskListView: View {
     @Bindable var store: TaskStore
     let sessionScanner: SessionScanner
+    let summaryProvider: SummaryProvider
     @State private var isAddingTask = false
     @State private var detectedFolderName: String?
     @State private var detectedProjectPath: String?
     @State private var detectedGitBranch: String?
     @State private var detectedContext: String?
+    @State private var expandedTaskId: UUID?
+    @State private var summaries: [UUID: String] = [:]
+    @State private var loadingSummaryId: UUID?
 
     var body: some View {
         VStack(spacing: 0) {
@@ -76,9 +80,18 @@ struct TaskListView: View {
                     emptyState
                 } else {
                     ForEach(store.visibleTasks) { task in
-                        TaskRowView(task: task) { action in
-                            handleAction(action, for: task.id)
-                        }
+                        TaskRowView(
+                            task: task,
+                            isExpanded: expandedTaskId == task.id,
+                            summary: summaries[task.id],
+                            isLoadingSummary: loadingSummaryId == task.id,
+                            onAction: { action in
+                                handleAction(action, for: task.id)
+                            },
+                            onTap: {
+                                toggleExpansion(for: task)
+                            }
+                        )
                         Divider().padding(.horizontal, 10)
                     }
                 }
@@ -132,6 +145,31 @@ struct TaskListView: View {
             store.togglePause(id)
         case .dismiss:
             store.dismissTask(id)
+        }
+    }
+
+    // MARK: - Expansion & Summary
+
+    private func toggleExpansion(for task: WhiplashTask) {
+        withAnimation(.easeInOut(duration: 0.2)) {
+            if expandedTaskId == task.id {
+                expandedTaskId = nil
+                return
+            }
+            expandedTaskId = task.id
+        }
+
+        // Fetch summary if not cached
+        guard summaries[task.id] == nil else { return }
+        guard task.sessionId != nil else { return }
+
+        loadingSummaryId = task.id
+        Task {
+            let result = await summaryProvider.summary(for: task)
+            loadingSummaryId = nil
+            if let result {
+                summaries[task.id] = result
+            }
         }
     }
 

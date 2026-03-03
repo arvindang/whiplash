@@ -8,6 +8,7 @@ final class StatusBarController {
     private var clickMonitor: Any?
     private let hotKeyManager = HotKeyManager()
     private let sessionScanner = SessionScanner()
+    private let summaryProvider = SummaryProvider()
     private var scanTimer: Timer?
     private var historyWatcher: FileWatcher?
     private var geminiWatcher: FileWatcher?
@@ -39,7 +40,7 @@ final class StatusBarController {
         popover.behavior = .transient
         popover.animates = true
 
-        let contentView = TaskListView(store: taskStore, sessionScanner: sessionScanner)
+        let contentView = TaskListView(store: taskStore, sessionScanner: sessionScanner, summaryProvider: summaryProvider)
         popover.contentViewController = NSHostingController(rootView: contentView)
     }
 

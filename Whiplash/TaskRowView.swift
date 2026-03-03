@@ -8,47 +8,97 @@ enum TaskRowAction {
 
 struct TaskRowView: View {
     let task: WhiplashTask
+    let isExpanded: Bool
+    let summary: String?
+    let isLoadingSummary: Bool
     let onAction: (TaskRowAction) -> Void
+    let onTap: () -> Void
 
     @State private var offset: CGFloat = 0
 
     var body: some View {
-        ZStack {
-            // Swipe left background — mark done (green)
-            if offset < 0 {
-                HStack {
-                    Spacer()
-                    Image(systemName: "checkmark.circle.fill")
-                        .foregroundStyle(.green)
-                        .padding(.trailing, 16)
+        VStack(alignment: .leading, spacing: 0) {
+            ZStack {
+                // Swipe left background — mark done (green)
+                if offset < 0 {
+                    HStack {
+                        Spacer()
+                        Image(systemName: "checkmark.circle.fill")
+                            .foregroundStyle(.green)
+                            .padding(.trailing, 16)
+                    }
                 }
-            }
 
-            // Swipe right background — pause/resume (orange)
-            if offset > 0 {
-                HStack {
-                    Image(systemName: task.status == .paused ? "play.circle.fill" : "pause.circle.fill")
-                        .foregroundStyle(.orange)
-                        .padding(.leading, 16)
-                    Spacer()
+                // Swipe right background — pause/resume (orange)
+                if offset > 0 {
+                    HStack {
+                        Image(systemName: task.status == .paused ? "play.circle.fill" : "pause.circle.fill")
+                            .foregroundStyle(.orange)
+                            .padding(.leading, 16)
+                        Spacer()
+                    }
                 }
-            }
 
-            // Main row content
-            rowContent
-                .offset(x: offset)
-                .gesture(swipeGesture)
-                .background(
-                    TrackpadSwipeDetector(
-                        offset: $offset,
-                        onSwipeLeft: { onAction(.markDone) },
-                        onSwipeRight: { onAction(.togglePause) }
+                // Main row content
+                rowContent
+                    .offset(x: offset)
+                    .gesture(swipeGesture)
+                    .background(
+                        TrackpadSwipeDetector(
+                            offset: $offset,
+                            onSwipeLeft: { onAction(.markDone) },
+                            onSwipeRight: { onAction(.togglePause) }
+                        )
                     )
-                )
+            }
+            .contentShape(Rectangle())
+            .onTapGesture { onTap() }
+
+            if isExpanded {
+                expandedContent
+                    .padding(.leading, 18)
+                    .padding(.trailing, 8)
+                    .padding(.top, 4)
+                    .padding(.bottom, 2)
+            }
         }
         .padding(.horizontal, 10)
         .padding(.vertical, 6)
         .opacity(task.status == .done ? 0.5 : 1.0)
+    }
+
+    @ViewBuilder
+    private var expandedContent: some View {
+        if isLoadingSummary {
+            HStack(spacing: 4) {
+                ProgressView()
+                    .controlSize(.mini)
+                Text("Loading...")
+                    .font(.system(size: 10, design: .monospaced))
+                    .foregroundStyle(.tertiary)
+            }
+        } else if let summary {
+            Text(summary)
+                .font(.system(size: 11, design: .monospaced))
+                .foregroundStyle(.secondary)
+                .lineLimit(3)
+                .textSelection(.enabled)
+        } else {
+            Text(noSummaryMessage)
+                .font(.system(size: 10, design: .monospaced))
+                .foregroundStyle(.tertiary)
+                .italic()
+        }
+    }
+
+    private var noSummaryMessage: String {
+        if task.sessionId == nil {
+            return "Manual task"
+        }
+        let ctx = task.context.lowercased()
+        if ctx.contains("gemini") { return "Summary not available for Gemini sessions" }
+        if ctx.contains("codex") { return "Summary not available for Codex sessions" }
+        return "No session data"
     }
 
     private var rowContent: some View {
