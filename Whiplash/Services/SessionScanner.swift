@@ -1,46 +1,139 @@
 import Foundation
 
+struct ProjectInfo: Sendable {
+    let path: String
+    let folderName: String
+    let gitBranch: String?
+}
+
 actor SessionScanner {
     private let claudeDir: URL
+    private let geminiDir: URL
 
     init() {
-        claudeDir = FileManager.default.homeDirectoryForCurrentUser
-            .appendingPathComponent(".claude")
+        let home = FileManager.default.homeDirectoryForCurrentUser
+        claudeDir = home.appendingPathComponent(".claude")
+        geminiDir = home.appendingPathComponent(".gemini")
     }
 
     var historyFileURL: URL {
         claudeDir.appendingPathComponent("history.jsonl")
     }
 
-    func scanForSessions() -> [ClaudeSession] {
-        // Phase 1: Get running claude PIDs
-        let pids = getRunningClaudePIDs()
+    var geminiProjectsFileURL: URL {
+        geminiDir.appendingPathComponent("projects.json")
+    }
 
-        // Phase 2: Scan session files for rich metadata
-        let rawSessions = scanSessionFiles()
+    /// Detect the project folder and git branch for a given PID.
+    /// For terminal apps, walks descendant processes to find a shell with a useful cwd.
+    func detectProjectInfo(forPID pid: Int32, isTerminal: Bool) -> ProjectInfo? {
+        let targetPIDs: [Int32]
+        if isTerminal {
+            targetPIDs = findDescendantPIDs(pid)
+        } else {
+            targetPIDs = [pid]
+        }
 
-        // Phase 3: Match PIDs to sessions via cwd
-        let pidCwds = resolvePIDWorkingDirectories(pids: pids)
-        return mergeSessions(rawSessions, pidCwds: pidCwds, runningPIDs: pids)
+        var bestResult: ProjectInfo?
+        for targetPID in targetPIDs {
+            guard let cwd = resolveCwd(forPID: targetPID) else { continue }
+            let folderName = URL(fileURLWithPath: cwd).lastPathComponent
+            let branch = detectGitBranch(atPath: cwd)
+            let info = ProjectInfo(path: cwd, folderName: folderName, gitBranch: branch)
+            if branch != nil {
+                return info // Prefer paths with git repos
+            }
+            if bestResult == nil {
+                bestResult = info
+            }
+        }
+        return bestResult
+    }
+
+    func scanForSessions() -> [AISession] {
+        // Phase 1: Build full process table in one ps call
+        let (pidsByTool, processMap) = buildProcessTable()
+
+        // Phase 2: Scan Claude session files for rich metadata
+        let claudePIDs = pidsByTool[.claude] ?? []
+        let claudeSessions = scanClaudeSessions(runningPIDs: claudePIDs, processMap: processMap)
+
+        // Phase 3: Scan Gemini session files
+        let geminiPIDs = pidsByTool[.gemini] ?? []
+        let geminiSessions = scanGeminiSessions(runningPIDs: geminiPIDs, processMap: processMap)
+
+        // Phase 4: Build Codex sessions from PIDs only
+        let codexPIDs = pidsByTool[.codex] ?? []
+        let codexSessions = buildCodexSessions(pids: codexPIDs, processMap: processMap)
+
+        return claudeSessions + geminiSessions + codexSessions
     }
 
     // MARK: - Phase 1: Process Detection
 
-    private func getRunningClaudePIDs() -> Set<Int32> {
-        let output = runProcess("/usr/bin/pgrep", arguments: ["-x", "claude"])
-        guard let output else { return [] }
-
-        var pids = Set<Int32>()
-        for line in output.components(separatedBy: "\n") {
-            let trimmed = line.trimmingCharacters(in: .whitespaces)
-            if let pid = Int32(trimmed) {
-                pids.insert(pid)
-            }
-        }
-        return pids
+    private struct ProcessEntry {
+        let ppid: Int32
+        let comm: String
     }
 
-    // MARK: - Phase 2: Session File Scanning
+    private func buildProcessTable() -> ([AITool: Set<Int32>], [Int32: ProcessEntry]) {
+        guard let output = runProcess("/bin/ps", arguments: ["-axco", "pid,ppid,comm"]) else { return ([:], [:]) }
+
+        var pidsByTool: [AITool: Set<Int32>] = [:]
+        var processMap: [Int32: ProcessEntry] = [:]
+
+        for line in output.components(separatedBy: "\n") {
+            let trimmed = line.trimmingCharacters(in: .whitespaces)
+            let parts = trimmed.split(separator: " ", maxSplits: 2)
+            guard parts.count == 3,
+                  let pid = Int32(parts[0]),
+                  let ppid = Int32(parts[1]) else { continue }
+            let comm = String(parts[2])
+
+            processMap[pid] = ProcessEntry(ppid: ppid, comm: comm)
+
+            if let tool = AITool(rawValue: comm) {
+                pidsByTool[tool, default: []].insert(pid)
+            }
+        }
+        return (pidsByTool, processMap)
+    }
+
+    // MARK: - Terminal Resolution
+
+    private func matchTerminalName(_ comm: String) -> String? {
+        switch comm {
+        case "iTerm2":    return "iTerm2"
+        case "Terminal":  return "Terminal"
+        case "ghostty":   return "Ghostty"
+        case "Warp":      return "Warp"
+        case "kitty":     return "kitty"
+        case "alacritty": return "Alacritty"
+        case "WezTerm":   return "WezTerm"
+        default: break
+        }
+        if comm.hasPrefix("tmux") { return "tmux" }
+        return nil
+    }
+
+    private func resolveTerminalApp(forPID pid: Int32, processMap: [Int32: ProcessEntry]) -> String? {
+        var current = pid
+        for _ in 0..<10 {
+            guard let entry = processMap[current] else { return nil }
+            if let name = matchTerminalName(entry.comm) { return name }
+            if entry.ppid <= 1 { return nil } // reached launchd/kernel
+            current = entry.ppid
+        }
+        return nil
+    }
+
+    // MARK: - Claude Session Scanning
+
+    private func scanClaudeSessions(runningPIDs: Set<Int32>, processMap: [Int32: ProcessEntry]) -> [AISession] {
+        let rawSessions = scanClaudeSessionFiles()
+        let pidCwds = resolvePIDWorkingDirectories(pids: runningPIDs)
+        return mergeSessions(rawSessions, pidCwds: pidCwds, runningPIDs: runningPIDs, tool: .claude, processMap: processMap)
+    }
 
     private struct RawSession {
         let sessionId: String
@@ -49,7 +142,7 @@ actor SessionScanner {
         let lastTimestamp: Date
     }
 
-    private func scanSessionFiles() -> [RawSession] {
+    private func scanClaudeSessionFiles() -> [RawSession] {
         let projectsDir = claudeDir.appendingPathComponent("projects")
         let fm = FileManager.default
 
@@ -76,7 +169,7 @@ actor SessionScanner {
                       modDate > cutoff else { continue }
 
                 let sessionId = file.deletingPathExtension().lastPathComponent
-                if let session = parseSessionFile(file, sessionId: sessionId) {
+                if let session = parseClaudeSessionFile(file, sessionId: sessionId) {
                     results.append(session)
                 }
             }
@@ -85,7 +178,7 @@ actor SessionScanner {
         return results
     }
 
-    private func parseSessionFile(_ url: URL, sessionId: String) -> RawSession? {
+    private func parseClaudeSessionFile(_ url: URL, sessionId: String) -> RawSession? {
         guard let handle = try? FileHandle(forReadingFrom: url) else { return nil }
         defer { try? handle.close() }
 
@@ -137,6 +230,124 @@ actor SessionScanner {
         )
     }
 
+    // MARK: - Gemini Session Scanning
+
+    private func scanGeminiSessions(runningPIDs: Set<Int32>, processMap: [Int32: ProcessEntry]) -> [AISession] {
+        let tmpDir = geminiDir.appendingPathComponent("tmp")
+        let fm = FileManager.default
+
+        guard let projectDirs = try? fm.contentsOfDirectory(
+            at: tmpDir,
+            includingPropertiesForKeys: [.isDirectoryKey]
+        ) else { return [] }
+
+        let cutoff = Date().addingTimeInterval(-600) // 10 minutes
+        var rawSessions: [RawSession] = []
+
+        for projectDir in projectDirs {
+            guard let isDir = try? projectDir.resourceValues(forKeys: [.isDirectoryKey]).isDirectory,
+                  isDir else { continue }
+
+            // Read .project_root for the actual project path
+            let projectRootFile = projectDir.appendingPathComponent(".project_root")
+            let projectPath: String
+            if let rootContent = try? String(contentsOf: projectRootFile, encoding: .utf8) {
+                projectPath = rootContent.trimmingCharacters(in: .whitespacesAndNewlines)
+            } else {
+                continue
+            }
+
+            let chatsDir = projectDir.appendingPathComponent("chats")
+            guard let chatFiles = try? fm.contentsOfDirectory(
+                at: chatsDir,
+                includingPropertiesForKeys: [.contentModificationDateKey]
+            ) else { continue }
+
+            for file in chatFiles where file.pathExtension == "json" && file.lastPathComponent.hasPrefix("session-") {
+                guard let attrs = try? file.resourceValues(forKeys: [.contentModificationDateKey]),
+                      let modDate = attrs.contentModificationDate,
+                      modDate > cutoff else { continue }
+
+                if let session = parseGeminiSessionFile(file, projectPath: projectPath, modDate: modDate) {
+                    rawSessions.append(session)
+                }
+            }
+        }
+
+        let pidCwds = resolvePIDWorkingDirectories(pids: runningPIDs)
+        return mergeSessions(rawSessions, pidCwds: pidCwds, runningPIDs: runningPIDs, tool: .gemini, processMap: processMap)
+    }
+
+    private func parseGeminiSessionFile(_ url: URL, projectPath: String, modDate: Date) -> RawSession? {
+        // Read only first 512 bytes to extract sessionId without loading full history
+        guard let handle = try? FileHandle(forReadingFrom: url) else { return nil }
+        defer { try? handle.close() }
+
+        let headerData = handle.readData(ofLength: 512)
+        var sessionId: String?
+        var lastUpdated: Date = modDate
+
+        if let headerStr = String(data: headerData, encoding: .utf8),
+           let jsonData = headerStr.data(using: .utf8),
+           let json = try? JSONSerialization.jsonObject(with: jsonData) as? [String: Any] {
+            if let sid = json["sessionId"] as? String {
+                sessionId = sid
+            }
+            if let ts = json["lastUpdated"] as? String {
+                let formatter = ISO8601DateFormatter()
+                formatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+                if let date = formatter.date(from: ts) {
+                    lastUpdated = date
+                } else {
+                    formatter.formatOptions = [.withInternetDateTime]
+                    if let date = formatter.date(from: ts) {
+                        lastUpdated = date
+                    }
+                }
+            }
+        }
+
+        // Fall back to filename as session ID
+        let fileBasedId = url.deletingPathExtension().lastPathComponent
+        let finalSessionId = "gemini-\(sessionId ?? fileBasedId)"
+
+        let gitBranch = detectGitBranch(atPath: projectPath)
+
+        return RawSession(
+            sessionId: finalSessionId,
+            projectPath: projectPath,
+            gitBranch: gitBranch,
+            lastTimestamp: lastUpdated
+        )
+    }
+
+    // MARK: - Codex Process-Only Detection
+
+    private func buildCodexSessions(pids: Set<Int32>, processMap: [Int32: ProcessEntry]) -> [AISession] {
+        var sessions: [AISession] = []
+        for pid in pids {
+            guard let cwd = resolveCwd(forPID: pid) else { continue }
+            let projectName = URL(fileURLWithPath: cwd).lastPathComponent
+            let gitBranch = detectGitBranch(atPath: cwd)
+            let terminal = resolveTerminalApp(forPID: pid, processMap: processMap)
+
+            sessions.append(AISession(
+                tool: .codex,
+                sessionId: "codex:\(cwd)",
+                projectPath: cwd,
+                projectName: projectName,
+                gitBranch: gitBranch,
+                pid: pid,
+                lastActivityTimestamp: Date(),
+                isProcessRunning: true,
+                terminalApp: terminal
+            ))
+        }
+        return sessions
+    }
+
+    // MARK: - Timestamp Parsing
+
     private func parseTimestamp(from json: [String: Any]) -> Date? {
         if let t = json["timestamp"] as? String {
             let formatter = ISO8601DateFormatter()
@@ -153,35 +364,65 @@ actor SessionScanner {
         return nil
     }
 
-    // MARK: - Phase 3: PID Resolution & Merge
+    // MARK: - PID Resolution & Merge
 
     private func resolvePIDWorkingDirectories(pids: Set<Int32>) -> [Int32: String] {
         var result: [Int32: String] = [:]
         for pid in pids {
-            guard let output = runProcess(
-                "/usr/sbin/lsof",
-                arguments: ["-a", "-p", "\(pid)", "-d", "cwd", "-Fn"]
-            ) else { continue }
-
-            for line in output.components(separatedBy: "\n") {
-                if line.hasPrefix("n/") {
-                    let path = String(line.dropFirst())
-                    // Skip root directory — lsof returns "/" when cwd is unavailable
-                    if path != "/" {
-                        result[pid] = path
-                    }
-                    break
-                }
+            if let cwd = resolveCwd(forPID: pid) {
+                result[pid] = cwd
             }
         }
         return result
     }
 
+    private func resolveCwd(forPID pid: Int32) -> String? {
+        guard let output = runProcess(
+            "/usr/sbin/lsof",
+            arguments: ["-a", "-p", "\(pid)", "-d", "cwd", "-Fn"]
+        ) else { return nil }
+
+        for line in output.components(separatedBy: "\n") {
+            if line.hasPrefix("n/") {
+                let path = String(line.dropFirst())
+                // Skip root directory — lsof returns "/" when cwd is unavailable
+                if path != "/" { return path }
+                break
+            }
+        }
+        return nil
+    }
+
+    private func findDescendantPIDs(_ parentPID: Int32, maxDepth: Int = 3) -> [Int32] {
+        guard maxDepth > 0 else { return [] }
+        guard let output = runProcess("/usr/bin/pgrep", arguments: ["-P", "\(parentPID)"]) else { return [] }
+
+        var pids: [Int32] = []
+        for line in output.components(separatedBy: "\n") {
+            if let pid = Int32(line.trimmingCharacters(in: .whitespaces)) {
+                pids.append(pid)
+                pids.append(contentsOf: findDescendantPIDs(pid, maxDepth: maxDepth - 1))
+            }
+        }
+        return pids
+    }
+
+    private func detectGitBranch(atPath path: String) -> String? {
+        guard let output = runProcess(
+            "/usr/bin/git",
+            arguments: ["-C", path, "branch", "--show-current"]
+        ) else { return nil }
+        let branch = output.trimmingCharacters(in: .whitespacesAndNewlines)
+        return branch.isEmpty ? nil : branch
+    }
+
     private func mergeSessions(
         _ sessions: [RawSession],
         pidCwds: [Int32: String],
-        runningPIDs: Set<Int32>
-    ) -> [ClaudeSession] {
+        runningPIDs: Set<Int32>,
+        tool: AITool,
+        processMap: [Int32: ProcessEntry]
+    ) -> [AISession] {
         var claimedPIDs = Set<Int32>()
 
         return sessions.map { session in
@@ -202,15 +443,18 @@ actor SessionScanner {
             }
 
             let projectName = URL(fileURLWithPath: session.projectPath).lastPathComponent
+            let terminal = matchedPID.flatMap { resolveTerminalApp(forPID: $0, processMap: processMap) }
 
-            return ClaudeSession(
+            return AISession(
+                tool: tool,
                 sessionId: session.sessionId,
                 projectPath: session.projectPath,
                 projectName: projectName,
                 gitBranch: session.gitBranch,
                 pid: matchedPID,
                 lastActivityTimestamp: session.lastTimestamp,
-                isProcessRunning: matchedPID != nil
+                isProcessRunning: matchedPID != nil,
+                terminalApp: terminal
             )
         }
     }

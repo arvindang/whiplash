@@ -8,6 +8,10 @@ final class TaskStore {
     private let fileURL: URL
     private var fileWatcher: FileWatcher?
 
+    /// Ephemeral state: frontmost app info captured before popover opens
+    @ObservationIgnored var lastFrontmostPID: Int32?
+    @ObservationIgnored var lastFrontmostBundleID: String?
+
     static let shared = TaskStore()
 
     private init() {
@@ -40,8 +44,8 @@ final class TaskStore {
         }
     }
 
-    func addTask(title: String, context: String) {
-        let task = WhiplashTask(title: title, context: context)
+    func addTask(title: String, context: String, projectPath: String? = nil, gitBranch: String? = nil) {
+        let task = WhiplashTask(title: title, context: context, projectPath: projectPath, gitBranch: gitBranch)
         tasks.append(task)
         saveTasks()
     }
@@ -70,7 +74,7 @@ final class TaskStore {
         saveTasks()
     }
 
-    func reconcileClaudeSessions(_ sessions: [ClaudeSession]) {
+    func reconcileAISessions(_ sessions: [AISession]) {
         var changed = false
 
         let sessionMap = Dictionary(sessions.map { ($0.sessionId, $0) }, uniquingKeysWith: { _, last in last })
@@ -78,18 +82,16 @@ final class TaskStore {
         // 1. Create tasks for running sessions without existing tasks
         for session in sessions where session.isProcessRunning {
             if !tasks.contains(where: { $0.sessionId == session.sessionId }) {
-                var title = session.projectName
-                if let branch = session.gitBranch, branch != "HEAD", !branch.isEmpty {
-                    title += " (\(branch))"
-                }
+                let title = session.projectName
                 let task = WhiplashTask(
                     title: title,
-                    context: "Claude Code",
+                    context: session.tool.contextName,
                     isAutoDetected: true,
                     sessionId: session.sessionId,
                     projectPath: session.projectPath,
                     gitBranch: session.gitBranch,
-                    pid: session.pid
+                    pid: session.pid,
+                    terminalApp: session.terminalApp
                 )
                 tasks.append(task)
                 changed = true
@@ -108,6 +110,10 @@ final class TaskStore {
                 }
                 if tasks[i].gitBranch != session.gitBranch {
                     tasks[i].gitBranch = session.gitBranch
+                    changed = true
+                }
+                if tasks[i].terminalApp != session.terminalApp {
+                    tasks[i].terminalApp = session.terminalApp
                     changed = true
                 }
 

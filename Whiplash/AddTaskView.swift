@@ -1,13 +1,19 @@
 import SwiftUI
 
 struct AddTaskView: View {
-    let onAdd: (String, String) -> Void
+    let initialTitle: String?
+    let initialContext: String?
+    let detectedProjectPath: String?
+    let detectedGitBranch: String?
+    let onAdd: (String, String, String?, String?) -> Void
     let onCancel: () -> Void
 
     @State private var title = ""
     @State private var selectedContext = "iTerm"
+    @State private var didApplyTitle = false
+    @State private var didApplyContext = false
 
-    private let contexts = ["iTerm", "Claude Code", "Cowork", "Xcode", "Terminal", "Custom"]
+    private let contexts = ["iTerm", "Claude Code", "Codex CLI", "Gemini CLI", "Cowork", "Xcode", "Terminal", "Custom"]
     @State private var customContext = ""
 
     var body: some View {
@@ -51,7 +57,7 @@ struct AddTaskView: View {
                 Button("Add") {
                     let context = selectedContext == "Custom" ? customContext : selectedContext
                     guard !title.isEmpty else { return }
-                    onAdd(title, context)
+                    onAdd(title, context, detectedProjectPath, detectedGitBranch)
                 }
                 .buttonStyle(.plain)
                 .font(.system(size: 11, weight: .semibold, design: .monospaced))
@@ -60,6 +66,18 @@ struct AddTaskView: View {
             }
         }
         .padding(.vertical, 4)
+        .onChange(of: initialTitle) { _, newValue in
+            if let newValue, !didApplyTitle {
+                title = newValue
+                didApplyTitle = true
+            }
+        }
+        .onChange(of: initialContext) { _, newValue in
+            if let newValue, !didApplyContext {
+                selectedContext = newValue
+                didApplyContext = true
+            }
+        }
     }
 
     private func contextButton(_ context: String) -> some View {

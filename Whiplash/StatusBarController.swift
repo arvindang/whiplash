@@ -10,6 +10,7 @@ final class StatusBarController {
     private let sessionScanner = SessionScanner()
     private var scanTimer: Timer?
     private var historyWatcher: FileWatcher?
+    private var geminiWatcher: FileWatcher?
     private let taskStore = TaskStore.shared
 
     init() {
@@ -38,7 +39,7 @@ final class StatusBarController {
         popover.behavior = .transient
         popover.animates = true
 
-        let contentView = TaskListView(store: taskStore)
+        let contentView = TaskListView(store: taskStore, sessionScanner: sessionScanner)
         popover.contentViewController = NSHostingController(rootView: contentView)
     }
 
@@ -52,10 +53,19 @@ final class StatusBarController {
         // Initial scan on startup
         performScan()
 
-        // Watch history.jsonl for immediate detection of new prompts
+        // Watch history.jsonl for immediate detection of new Claude prompts
         let historyURL = URL(fileURLWithPath: NSHomeDirectory())
             .appendingPathComponent(".claude/history.jsonl")
         historyWatcher = FileWatcher(url: historyURL) { [weak self] in
+            Task { @MainActor [weak self] in
+                self?.performScan()
+            }
+        }
+
+        // Watch Gemini projects.json for immediate detection of new Gemini sessions
+        let geminiProjectsURL = URL(fileURLWithPath: NSHomeDirectory())
+            .appendingPathComponent(".gemini/projects.json")
+        geminiWatcher = FileWatcher(url: geminiProjectsURL) { [weak self] in
             Task { @MainActor [weak self] in
                 self?.performScan()
             }
@@ -74,7 +84,7 @@ final class StatusBarController {
         Task { @MainActor [weak self] in
             guard let self else { return }
             let sessions = await self.sessionScanner.scanForSessions()
-            self.taskStore.reconcileClaudeSessions(sessions)
+            self.taskStore.reconcileAISessions(sessions)
         }
     }
 
@@ -87,6 +97,11 @@ final class StatusBarController {
     }
 
     private func showPopover() {
+        // Capture frontmost app BEFORE showing popover (showing moves focus to Whiplash)
+        let frontmostApp = NSWorkspace.shared.frontmostApplication
+        taskStore.lastFrontmostPID = frontmostApp?.processIdentifier
+        taskStore.lastFrontmostBundleID = frontmostApp?.bundleIdentifier
+
         guard let button = statusItem.button else { return }
         popover.show(relativeTo: button.bounds, of: button, preferredEdge: .minY)
 

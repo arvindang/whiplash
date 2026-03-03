@@ -58,6 +58,9 @@ struct TaskRowView: View {
 
                 HStack(spacing: 6) {
                     contextPill
+                    if let terminal = task.terminalApp {
+                        terminalPill(terminal)
+                    }
                     if let branch = task.gitBranch, branch != "HEAD", !branch.isEmpty {
                         Text(branch)
                             .font(.system(size: 9, weight: .medium, design: .monospaced))
@@ -103,10 +106,35 @@ struct TaskRowView: View {
         }
     }
 
+    private func terminalPill(_ name: String) -> some View {
+        Text(name)
+            .font(.system(size: 9, weight: .medium, design: .monospaced))
+            .foregroundStyle(.white)
+            .padding(.horizontal, 6)
+            .padding(.vertical, 2)
+            .background(Capsule().fill(terminalColor(name)))
+    }
+
+    private func terminalColor(_ name: String) -> Color {
+        switch name {
+        case "iTerm2":    return .blue
+        case "Terminal":  return .blue
+        case "Ghostty":   return .indigo
+        case "Warp":      return .teal
+        case "kitty":     return .pink
+        case "Alacritty": return .orange
+        case "WezTerm":   return .brown
+        case "tmux":      return .green
+        default:          return .gray
+        }
+    }
+
     private var contextColor: Color {
         switch task.context.lowercased() {
         case let c where c.contains("iterm"): .blue
         case let c where c.contains("claude"): .purple
+        case let c where c.contains("codex"): .green
+        case let c where c.contains("gemini"): .mint
         case let c where c.contains("cowork"): .orange
         case let c where c.contains("terminal"): .blue
         case let c where c.contains("xcode"): .cyan

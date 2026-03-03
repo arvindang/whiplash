@@ -12,6 +12,7 @@ struct WhiplashTask: Identifiable, Codable, Sendable {
     var projectPath: String?
     var gitBranch: String?
     var pid: Int32?
+    var terminalApp: String?
 
     enum TaskStatus: String, Codable, Sendable {
         case active
@@ -30,7 +31,8 @@ struct WhiplashTask: Identifiable, Codable, Sendable {
         sessionId: String? = nil,
         projectPath: String? = nil,
         gitBranch: String? = nil,
-        pid: Int32? = nil
+        pid: Int32? = nil,
+        terminalApp: String? = nil
     ) {
         self.id = id
         self.title = title
@@ -43,6 +45,7 @@ struct WhiplashTask: Identifiable, Codable, Sendable {
         self.projectPath = projectPath
         self.gitBranch = gitBranch
         self.pid = pid
+        self.terminalApp = terminalApp
     }
 
     init(from decoder: Decoder) throws {
@@ -58,5 +61,6 @@ struct WhiplashTask: Identifiable, Codable, Sendable {
         projectPath = try container.decodeIfPresent(String.self, forKey: .projectPath)
         gitBranch = try container.decodeIfPresent(String.self, forKey: .gitBranch)
         pid = try container.decodeIfPresent(Int32.self, forKey: .pid)
+        terminalApp = try container.decodeIfPresent(String.self, forKey: .terminalApp)
     }
 }

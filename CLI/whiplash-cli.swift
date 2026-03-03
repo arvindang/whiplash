@@ -16,6 +16,7 @@ struct WhiplashTask: Identifiable, Codable {
     var projectPath: String?
     var gitBranch: String?
     var pid: Int32?
+    var terminalApp: String?
 
     enum TaskStatus: String, Codable {
         case active
@@ -30,7 +31,9 @@ struct WhiplashTask: Identifiable, Codable {
         status: TaskStatus = .active,
         createdAt: Date = Date(),
         updatedAt: Date = Date(),
-        isAutoDetected: Bool = false
+        isAutoDetected: Bool = false,
+        projectPath: String? = nil,
+        gitBranch: String? = nil
     ) {
         self.id = id
         self.title = title
@@ -39,6 +42,8 @@ struct WhiplashTask: Identifiable, Codable {
         self.createdAt = createdAt
         self.updatedAt = updatedAt
         self.isAutoDetected = isAutoDetected
+        self.projectPath = projectPath
+        self.gitBranch = gitBranch
     }
 
     init(from decoder: Decoder) throws {
@@ -54,6 +59,7 @@ struct WhiplashTask: Identifiable, Codable {
         projectPath = try container.decodeIfPresent(String.self, forKey: .projectPath)
         gitBranch = try container.decodeIfPresent(String.self, forKey: .gitBranch)
         pid = try container.decodeIfPresent(Int32.self, forKey: .pid)
+        terminalApp = try container.decodeIfPresent(String.self, forKey: .terminalApp)
     }
 }
 
@@ -89,12 +95,36 @@ func saveTasks(_ tasks: [WhiplashTask]) {
 
 // MARK: - Commands
 
-func addTask(title: String, context: String) {
+func detectGitBranch(atPath path: String) -> String? {
+    let process = Process()
+    process.executableURL = URL(fileURLWithPath: "/usr/bin/git")
+    process.arguments = ["-C", path, "branch", "--show-current"]
+    let pipe = Pipe()
+    process.standardOutput = pipe
+    process.standardError = FileHandle.nullDevice
+    do {
+        try process.run()
+        process.waitUntilExit()
+    } catch {
+        return nil
+    }
+    let data = pipe.fileHandleForReading.readDataToEndOfFile()
+    guard let output = String(data: data, encoding: .utf8) else { return nil }
+    let branch = output.trimmingCharacters(in: .whitespacesAndNewlines)
+    return branch.isEmpty ? nil : branch
+}
+
+func addTask(title: String, context: String, projectPath: String? = nil, gitBranch: String? = nil) {
     var tasks = loadTasks()
-    let task = WhiplashTask(title: title, context: context)
+    let task = WhiplashTask(title: title, context: context, projectPath: projectPath, gitBranch: gitBranch)
     tasks.append(task)
     saveTasks(tasks)
-    print("Added: \(title) [\(context)] (\(task.id.uuidString.prefix(8)))")
+    var info = "Added: \(title) [\(context)]"
+    if let branch = gitBranch {
+        info += " (\(branch))"
+    }
+    info += " (\(task.id.uuidString.prefix(8)))"
+    print(info)
 }
 
 func listTasks() {
@@ -110,7 +140,8 @@ func listTasks() {
         let prefix = task.id.uuidString.prefix(8)
         let status = task.status == .paused ? "⏸" : "⚡"
         let auto = task.isAutoDetected ? " (auto)" : ""
-        print("\(status) [\(prefix)] \(task.title) — \(task.context)\(auto)")
+        let terminal = task.terminalApp.map { " [\($0)]" } ?? ""
+        print("\(status) [\(prefix)] \(task.title) — \(task.context)\(terminal)\(auto)")
     }
 }
 
@@ -153,7 +184,7 @@ let args = Array(CommandLine.arguments.dropFirst())
 guard !args.isEmpty else {
     print("""
     Usage:
-      whiplash add "task name" [--context "iTerm"]
+      whiplash add "task name" [--context "iTerm"] [--project "PATH"] [--branch "BRANCH"]
       whiplash list
       whiplash done <id-prefix>
       whiplash pause <id-prefix>
@@ -164,15 +195,33 @@ guard !args.isEmpty else {
 switch args[0] {
 case "add":
     guard args.count >= 2 else {
-        fputs("Usage: whiplash add \"task name\" [--context \"CTX\"]\n", stderr)
+        fputs("Usage: whiplash add \"task name\" [--context \"CTX\"] [--project \"PATH\"] [--branch \"BRANCH\"]\n", stderr)
         exit(1)
     }
     let title = args[1]
     var context = "Terminal"
+    var projectPath: String?
+    var gitBranch: String?
+
     if let ctxIndex = args.firstIndex(of: "--context"), ctxIndex + 1 < args.count {
         context = args[ctxIndex + 1]
     }
-    addTask(title: title, context: context)
+    if let projIndex = args.firstIndex(of: "--project"), projIndex + 1 < args.count {
+        projectPath = args[projIndex + 1]
+    }
+    if let branchIndex = args.firstIndex(of: "--branch"), branchIndex + 1 < args.count {
+        gitBranch = args[branchIndex + 1]
+    }
+
+    // Auto-detect from $PWD when not explicitly specified
+    if projectPath == nil {
+        projectPath = FileManager.default.currentDirectoryPath
+    }
+    if gitBranch == nil, let path = projectPath {
+        gitBranch = detectGitBranch(atPath: path)
+    }
+
+    addTask(title: title, context: context, projectPath: projectPath, gitBranch: gitBranch)
 
 case "list", "ls":
     listTasks()

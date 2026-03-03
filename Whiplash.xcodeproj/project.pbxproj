@@ -7,7 +7,6 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		1581A9BE34DCE4B13CA4E61A /* ClaudeSession.swift in Sources */ = {isa = PBXBuildFile; fileRef = 809332A09A0317437967CBF4 /* ClaudeSession.swift */; };
 		184386F4497A970E5FE41378 /* Task.swift in Sources */ = {isa = PBXBuildFile; fileRef = B34F159F08467AF849A6A576 /* Task.swift */; };
 		1AFDC60503262D53DF77C6A0 /* TaskListView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F545B5A4FF6BEEAC016A09B9 /* TaskListView.swift */; };
 		22A5AC62FF408830A4E7D176 /* AddTaskView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2CE6DEC1AED6E225EEEF3CB7 /* AddTaskView.swift */; };
@@ -18,6 +17,7 @@
 		85934BF62CA6E3F203CB4FC3 /* HotKeyManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = BAA2C08409A4ADD7F72D63F8 /* HotKeyManager.swift */; };
 		8C9A482C931BBAA80595A05E /* TaskRowView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E8A27AD378D2A57896B6B30A /* TaskRowView.swift */; };
 		BB67C47FB63449D82702DE0C /* StatusBarController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6DF9F1A120858299758D95D2 /* StatusBarController.swift */; };
+		CDBFBE3C682A90FC3BCDDD67 /* AISession.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6522F0C0B8FD5997CEFA4CE0 /* AISession.swift */; };
 		D989BB11AB0B74912CDA8516 /* SessionScanner.swift in Sources */ = {isa = PBXBuildFile; fileRef = 14ED920EBFEAF2D85BED3D0F /* SessionScanner.swift */; };
 		DCF592595EE12C6807A4798F /* TaskStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5DDA911630420526449A5E03 /* TaskStore.swift */; };
 /* End PBXBuildFile section */
@@ -28,9 +28,9 @@
 		14ED920EBFEAF2D85BED3D0F /* SessionScanner.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SessionScanner.swift; sourceTree = "<group>"; };
 		2CE6DEC1AED6E225EEEF3CB7 /* AddTaskView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AddTaskView.swift; sourceTree = "<group>"; };
 		5DDA911630420526449A5E03 /* TaskStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TaskStore.swift; sourceTree = "<group>"; };
+		6522F0C0B8FD5997CEFA4CE0 /* AISession.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AISession.swift; sourceTree = "<group>"; };
 		6DF9F1A120858299758D95D2 /* StatusBarController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StatusBarController.swift; sourceTree = "<group>"; };
 		6EEA52759B742134971DAD4C /* WhiplashApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WhiplashApp.swift; sourceTree = "<group>"; };
-		809332A09A0317437967CBF4 /* ClaudeSession.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClaudeSession.swift; sourceTree = "<group>"; };
 		91611C6587603F9DC74F3A7D /* TimeFormatter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TimeFormatter.swift; sourceTree = "<group>"; };
 		A7B1255A15B1A790120CE165 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
 		ADA7B6710D0B46FDCCDF70FA /* FileWatcher.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FileWatcher.swift; sourceTree = "<group>"; };
@@ -78,7 +78,7 @@
 		9E4A545A50A5ACDC8C084BA8 /* Models */ = {
 			isa = PBXGroup;
 			children = (
-				809332A09A0317437967CBF4 /* ClaudeSession.swift */,
+				6522F0C0B8FD5997CEFA4CE0 /* AISession.swift */,
 				B34F159F08467AF849A6A576 /* Task.swift */,
 				5DDA911630420526449A5E03 /* TaskStore.swift */,
 			);
@@ -172,8 +172,8 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				CDBFBE3C682A90FC3BCDDD67 /* AISession.swift in Sources */,
 				22A5AC62FF408830A4E7D176 /* AddTaskView.swift in Sources */,
-				1581A9BE34DCE4B13CA4E61A /* ClaudeSession.swift in Sources */,
 				82F0C2EB34DD5134546A8D60 /* FileWatcher.swift in Sources */,
 				85934BF62CA6E3F203CB4FC3 /* HotKeyManager.swift in Sources */,
 				D989BB11AB0B74912CDA8516 /* SessionScanner.swift in Sources */,

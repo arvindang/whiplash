@@ -2,7 +2,12 @@ import SwiftUI
 
 struct TaskListView: View {
     @Bindable var store: TaskStore
+    let sessionScanner: SessionScanner
     @State private var isAddingTask = false
+    @State private var detectedFolderName: String?
+    @State private var detectedProjectPath: String?
+    @State private var detectedGitBranch: String?
+    @State private var detectedContext: String?
 
     var body: some View {
         VStack(spacing: 0) {
@@ -14,6 +19,13 @@ struct TaskListView: View {
         }
         .frame(width: 320, height: 400)
         .background(.ultraThinMaterial)
+        .onChange(of: isAddingTask) { _, newValue in
+            if newValue {
+                startProjectDetection()
+            } else {
+                clearDetectedInfo()
+            }
+        }
     }
 
     private var header: some View {
@@ -44,8 +56,13 @@ struct TaskListView: View {
         ScrollView {
             LazyVStack(spacing: 0) {
                 if isAddingTask {
-                    AddTaskView { title, context in
-                        store.addTask(title: title, context: context)
+                    AddTaskView(
+                        initialTitle: detectedFolderName,
+                        initialContext: detectedContext,
+                        detectedProjectPath: detectedProjectPath,
+                        detectedGitBranch: detectedGitBranch
+                    ) { title, context, projectPath, gitBranch in
+                        store.addTask(title: title, context: context, projectPath: projectPath, gitBranch: gitBranch)
                         isAddingTask = false
                     } onCancel: {
                         isAddingTask = false
@@ -109,6 +126,62 @@ struct TaskListView: View {
             store.togglePause(id)
         case .dismiss:
             store.dismissTask(id)
+        }
+    }
+
+    // MARK: - Project Detection
+
+    private func startProjectDetection() {
+        guard let pid = store.lastFrontmostPID else { return }
+        let bundleID = store.lastFrontmostBundleID
+        let isTerminal = Self.isTerminalApp(bundleID)
+
+        // Auto-select context based on frontmost app
+        detectedContext = Self.contextForBundleID(bundleID)
+
+        Task {
+            if let info = await sessionScanner.detectProjectInfo(forPID: pid, isTerminal: isTerminal) {
+                detectedFolderName = info.folderName
+                detectedProjectPath = info.path
+                detectedGitBranch = info.gitBranch
+            }
+        }
+    }
+
+    private func clearDetectedInfo() {
+        detectedFolderName = nil
+        detectedProjectPath = nil
+        detectedGitBranch = nil
+        detectedContext = nil
+    }
+
+    private static let terminalBundleIDs: Set<String> = [
+        "com.googlecode.iterm2",
+        "com.apple.Terminal",
+        "dev.warp.Warp-Stable",
+        "com.github.alacritty",
+        "net.kovidgoyal.kitty",
+        "com.mitchellh.ghostty",
+        "org.wezfurlong.wezterm",
+    ]
+
+    private static func isTerminalApp(_ bundleID: String?) -> Bool {
+        guard let bundleID else { return false }
+        return terminalBundleIDs.contains(bundleID)
+    }
+
+    private static func contextForBundleID(_ bundleID: String?) -> String? {
+        guard let bundleID else { return nil }
+        switch bundleID {
+        case "com.googlecode.iterm2": return "iTerm"
+        case "com.apple.Terminal": return "Terminal"
+        case "com.apple.dt.Xcode": return "Xcode"
+        case "com.mitchellh.ghostty": return "Ghostty"
+        case "dev.warp.Warp-Stable": return "Warp"
+        case "net.kovidgoyal.kitty": return "kitty"
+        case "com.github.alacritty": return "Alacritty"
+        case "org.wezfurlong.wezterm": return "WezTerm"
+        default: return nil
         }
     }
 }
