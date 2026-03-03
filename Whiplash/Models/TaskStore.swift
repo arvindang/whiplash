@@ -74,6 +74,11 @@ final class TaskStore {
         saveTasks()
     }
 
+    func clearAll() {
+        tasks.removeAll()
+        saveTasks()
+    }
+
     func reconcileAISessions(_ sessions: [AISession]) {
         var changed = false
 

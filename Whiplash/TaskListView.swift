@@ -113,6 +113,12 @@ struct TaskListView: View {
             .font(.system(size: 11, design: .monospaced))
             .foregroundStyle(.secondary)
             Spacer()
+            Button("Clear") {
+                store.clearAll()
+            }
+            .buttonStyle(.plain)
+            .font(.system(size: 11, design: .monospaced))
+            .foregroundStyle(.secondary)
         }
         .padding(.horizontal, 14)
         .padding(.vertical, 8)
