@@ -1,0 +1,368 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 77;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		184386F4497A970E5FE41378 /* Task.swift in Sources */ = {isa = PBXBuildFile; fileRef = B34F159F08467AF849A6A576 /* Task.swift */; };
+		1AFDC60503262D53DF77C6A0 /* TaskListView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F545B5A4FF6BEEAC016A09B9 /* TaskListView.swift */; };
+		22A5AC62FF408830A4E7D176 /* AddTaskView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2CE6DEC1AED6E225EEEF3CB7 /* AddTaskView.swift */; };
+		3DE057CBB2835DEDCCD7EC67 /* TimeFormatter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 91611C6587603F9DC74F3A7D /* TimeFormatter.swift */; };
+		46EACD1278D6AC6F5366297B /* WhiplashApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6EEA52759B742134971DAD4C /* WhiplashApp.swift */; };
+		60ACA70C42E9E11F70D7C6B3 /* ProcessScanner.swift in Sources */ = {isa = PBXBuildFile; fileRef = D7736657588E1B0CF71DAC92 /* ProcessScanner.swift */; };
+		6E8C3E887521A66AABAAFC5D /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 0928AFB860E323EFD49D7D60 /* Assets.xcassets */; };
+		82F0C2EB34DD5134546A8D60 /* FileWatcher.swift in Sources */ = {isa = PBXBuildFile; fileRef = ADA7B6710D0B46FDCCDF70FA /* FileWatcher.swift */; };
+		85934BF62CA6E3F203CB4FC3 /* HotKeyManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = BAA2C08409A4ADD7F72D63F8 /* HotKeyManager.swift */; };
+		8C9A482C931BBAA80595A05E /* TaskRowView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E8A27AD378D2A57896B6B30A /* TaskRowView.swift */; };
+		BB67C47FB63449D82702DE0C /* StatusBarController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6DF9F1A120858299758D95D2 /* StatusBarController.swift */; };
+		DCF592595EE12C6807A4798F /* TaskStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5DDA911630420526449A5E03 /* TaskStore.swift */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXFileReference section */
+		0928AFB860E323EFD49D7D60 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		14752ABEA85302A63C37A263 /* Whiplash.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Whiplash.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		2CE6DEC1AED6E225EEEF3CB7 /* AddTaskView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AddTaskView.swift; sourceTree = "<group>"; };
+		5DDA911630420526449A5E03 /* TaskStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TaskStore.swift; sourceTree = "<group>"; };
+		6DF9F1A120858299758D95D2 /* StatusBarController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StatusBarController.swift; sourceTree = "<group>"; };
+		6EEA52759B742134971DAD4C /* WhiplashApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WhiplashApp.swift; sourceTree = "<group>"; };
+		91611C6587603F9DC74F3A7D /* TimeFormatter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TimeFormatter.swift; sourceTree = "<group>"; };
+		A7B1255A15B1A790120CE165 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
+		ADA7B6710D0B46FDCCDF70FA /* FileWatcher.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FileWatcher.swift; sourceTree = "<group>"; };
+		B34F159F08467AF849A6A576 /* Task.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Task.swift; sourceTree = "<group>"; };
+		BAA2C08409A4ADD7F72D63F8 /* HotKeyManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HotKeyManager.swift; sourceTree = "<group>"; };
+		D7736657588E1B0CF71DAC92 /* ProcessScanner.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProcessScanner.swift; sourceTree = "<group>"; };
+		E8A27AD378D2A57896B6B30A /* TaskRowView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TaskRowView.swift; sourceTree = "<group>"; };
+		F545B5A4FF6BEEAC016A09B9 /* TaskListView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TaskListView.swift; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXGroup section */
+		1E91EABAA2F968F8E1D74BF1 = {
+			isa = PBXGroup;
+			children = (
+				CC9E0B40C8F0C8F7F555D0CD /* Whiplash */,
+				59B9E7B39996211D9187E155 /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		329691CF76553C588CC3AACF /* Utilities */ = {
+			isa = PBXGroup;
+			children = (
+				BAA2C08409A4ADD7F72D63F8 /* HotKeyManager.swift */,
+				91611C6587603F9DC74F3A7D /* TimeFormatter.swift */,
+			);
+			path = Utilities;
+			sourceTree = "<group>";
+		};
+		59B9E7B39996211D9187E155 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				14752ABEA85302A63C37A263 /* Whiplash.app */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		7CDE22CE03B88A7BE19401A6 /* Services */ = {
+			isa = PBXGroup;
+			children = (
+				ADA7B6710D0B46FDCCDF70FA /* FileWatcher.swift */,
+				D7736657588E1B0CF71DAC92 /* ProcessScanner.swift */,
+			);
+			path = Services;
+			sourceTree = "<group>";
+		};
+		9E4A545A50A5ACDC8C084BA8 /* Models */ = {
+			isa = PBXGroup;
+			children = (
+				B34F159F08467AF849A6A576 /* Task.swift */,
+				5DDA911630420526449A5E03 /* TaskStore.swift */,
+			);
+			path = Models;
+			sourceTree = "<group>";
+		};
+		CC9E0B40C8F0C8F7F555D0CD /* Whiplash */ = {
+			isa = PBXGroup;
+			children = (
+				2CE6DEC1AED6E225EEEF3CB7 /* AddTaskView.swift */,
+				0928AFB860E323EFD49D7D60 /* Assets.xcassets */,
+				A7B1255A15B1A790120CE165 /* Info.plist */,
+				6DF9F1A120858299758D95D2 /* StatusBarController.swift */,
+				F545B5A4FF6BEEAC016A09B9 /* TaskListView.swift */,
+				E8A27AD378D2A57896B6B30A /* TaskRowView.swift */,
+				6EEA52759B742134971DAD4C /* WhiplashApp.swift */,
+				9E4A545A50A5ACDC8C084BA8 /* Models */,
+				7CDE22CE03B88A7BE19401A6 /* Services */,
+				329691CF76553C588CC3AACF /* Utilities */,
+			);
+			path = Whiplash;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		AA8FED211F48A24BF12A2CEE /* Whiplash */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = BD550364234ECF4AB8573977 /* Build configuration list for PBXNativeTarget "Whiplash" */;
+			buildPhases = (
+				60D0501A196147852D8FD8E5 /* Sources */,
+				C4932EA67BCC66A1996C6B46 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = Whiplash;
+			packageProductDependencies = (
+			);
+			productName = Whiplash;
+			productReference = 14752ABEA85302A63C37A263 /* Whiplash.app */;
+			productType = "com.apple.product-type.application";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		321CD252BF2E184FA31B55AB /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = YES;
+				LastUpgradeCheck = 2620;
+				TargetAttributes = {
+					AA8FED211F48A24BF12A2CEE = {
+						ProvisioningStyle = Manual;
+					};
+				};
+			};
+			buildConfigurationList = B85AB35F3972513ACADA5A84 /* Build configuration list for PBXProject "Whiplash" */;
+			compatibilityVersion = "Xcode 14.0";
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				Base,
+				en,
+			);
+			mainGroup = 1E91EABAA2F968F8E1D74BF1;
+			minimizedProjectReferenceProxies = 1;
+			preferredProjectObjectVersion = 77;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				AA8FED211F48A24BF12A2CEE /* Whiplash */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		C4932EA67BCC66A1996C6B46 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				6E8C3E887521A66AABAAFC5D /* Assets.xcassets in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		60D0501A196147852D8FD8E5 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				22A5AC62FF408830A4E7D176 /* AddTaskView.swift in Sources */,
+				82F0C2EB34DD5134546A8D60 /* FileWatcher.swift in Sources */,
+				85934BF62CA6E3F203CB4FC3 /* HotKeyManager.swift in Sources */,
+				60ACA70C42E9E11F70D7C6B3 /* ProcessScanner.swift in Sources */,
+				BB67C47FB63449D82702DE0C /* StatusBarController.swift in Sources */,
+				184386F4497A970E5FE41378 /* Task.swift in Sources */,
+				1AFDC60503262D53DF77C6A0 /* TaskListView.swift in Sources */,
+				8C9A482C931BBAA80595A05E /* TaskRowView.swift in Sources */,
+				DCF592595EE12C6807A4798F /* TaskStore.swift in Sources */,
+				3DE057CBB2835DEDCCD7EC67 /* TimeFormatter.swift in Sources */,
+				46EACD1278D6AC6F5366297B /* WhiplashApp.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin XCBuildConfiguration section */
+		25BA62394AEE385E6434EAA2 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_ENTITLEMENTS = Whiplash/Whiplash.entitlements;
+				COMBINE_HIDPI_IMAGES = YES;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = Whiplash/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/../Frameworks";
+				PRODUCT_BUNDLE_IDENTIFIER = io.embed3d.whiplash;
+				SDKROOT = macosx;
+			};
+			name = Release;
+		};
+		8E0B6927172D9C4E2239BD2F /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				CODE_SIGN_IDENTITY = "-";
+				CODE_SIGN_STYLE = Manual;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_HARDENED_RUNTIME = YES;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"$(inherited)",
+					"DEBUG=1",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 14.0;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = macosx;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				SWIFT_STRICT_CONCURRENCY = complete;
+				SWIFT_VERSION = 6;
+			};
+			name = Debug;
+		};
+		D074BD1AD40A25CC81829AFD /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_ENTITLEMENTS = Whiplash/Whiplash.entitlements;
+				COMBINE_HIDPI_IMAGES = YES;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = Whiplash/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/../Frameworks";
+				PRODUCT_BUNDLE_IDENTIFIER = io.embed3d.whiplash;
+				SDKROOT = macosx;
+			};
+			name = Debug;
+		};
+		FB5A0CEE5606B1801F7567EC /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				CODE_SIGN_IDENTITY = "-";
+				CODE_SIGN_STYLE = Manual;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_HARDENED_RUNTIME = YES;
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 14.0;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = macosx;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				SWIFT_OPTIMIZATION_LEVEL = "-O";
+				SWIFT_STRICT_CONCURRENCY = complete;
+				SWIFT_VERSION = 6;
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		B85AB35F3972513ACADA5A84 /* Build configuration list for PBXProject "Whiplash" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				8E0B6927172D9C4E2239BD2F /* Debug */,
+				FB5A0CEE5606B1801F7567EC /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		BD550364234ECF4AB8573977 /* Build configuration list for PBXNativeTarget "Whiplash" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				D074BD1AD40A25CC81829AFD /* Debug */,
+				25BA62394AEE385E6434EAA2 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = 321CD252BF2E184FA31B55AB /* Project object */;
+}
