@@ -76,23 +76,26 @@ struct TaskListView: View {
                     Divider().padding(.horizontal, 10)
                 }
 
-                if store.visibleTasks.isEmpty && !isAddingTask {
+                if store.tasks.isEmpty && !isAddingTask {
                     emptyState
                 } else {
-                    ForEach(store.visibleTasks) { task in
-                        TaskRowView(
-                            task: task,
-                            isExpanded: expandedTaskId == task.id,
-                            summary: summaries[task.id],
-                            isLoadingSummary: loadingSummaryId == task.id,
-                            onAction: { action in
-                                handleAction(action, for: task.id)
-                            },
-                            onTap: {
-                                toggleExpansion(for: task)
-                            }
-                        )
-                        Divider().padding(.horizontal, 10)
+                    ForEach(store.tasks) { task in
+                        VStack(spacing: 0) {
+                            TaskRowView(
+                                task: task,
+                                isExpanded: expandedTaskId == task.id,
+                                summary: summaries[task.id],
+                                isLoadingSummary: loadingSummaryId == task.id,
+                                onAction: { action in
+                                    handleAction(action, for: task.id)
+                                },
+                                onTap: {
+                                    toggleExpansion(for: task)
+                                }
+                            )
+                            Divider().padding(.horizontal, 10)
+                        }
+                        .transition(.move(edge: .leading).combined(with: .opacity))
                     }
                 }
             }
@@ -139,12 +142,14 @@ struct TaskListView: View {
 
     private func handleAction(_ action: TaskRowAction, for id: UUID) {
         switch action {
-        case .markDone:
-            store.markDone(id)
-        case .togglePause:
-            store.togglePause(id)
         case .dismiss:
+            if expandedTaskId == id { expandedTaskId = nil }
             store.dismissTask(id)
+        case .completedDismiss:
+            if expandedTaskId == id { expandedTaskId = nil }
+            withAnimation(.easeInOut(duration: 0.35)) {
+                store.dismissTask(id)
+            }
         }
     }
 

@@ -1,9 +1,8 @@
 import SwiftUI
 
 enum TaskRowAction {
-    case markDone
-    case togglePause
-    case dismiss
+    case dismiss          // X button: immediate removal
+    case completedDismiss // Checkmark: slide-off removal (done tasks only)
 }
 
 struct TaskRowView: View {
@@ -14,45 +13,11 @@ struct TaskRowView: View {
     let onAction: (TaskRowAction) -> Void
     let onTap: () -> Void
 
-    @State private var offset: CGFloat = 0
-
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
-            ZStack {
-                // Swipe left background — mark done (green)
-                if offset < 0 {
-                    HStack {
-                        Spacer()
-                        Image(systemName: "checkmark.circle.fill")
-                            .foregroundStyle(.green)
-                            .padding(.trailing, 16)
-                    }
-                }
-
-                // Swipe right background — pause/resume (orange)
-                if offset > 0 {
-                    HStack {
-                        Image(systemName: task.status == .paused ? "play.circle.fill" : "pause.circle.fill")
-                            .foregroundStyle(.orange)
-                            .padding(.leading, 16)
-                        Spacer()
-                    }
-                }
-
-                // Main row content
-                rowContent
-                    .offset(x: offset)
-                    .gesture(swipeGesture)
-                    .background(
-                        TrackpadSwipeDetector(
-                            offset: $offset,
-                            onSwipeLeft: { onAction(.markDone) },
-                            onSwipeRight: { onAction(.togglePause) }
-                        )
-                    )
-            }
-            .contentShape(Rectangle())
-            .onTapGesture { onTap() }
+            rowContent
+                .contentShape(Rectangle())
+                .onTapGesture { onTap() }
 
             if isExpanded {
                 expandedContent
@@ -136,18 +101,24 @@ struct TaskRowView: View {
 
             Spacer()
 
-            if task.isAutoDetected {
-                Button(action: { onAction(.dismiss) }) {
-                    Image(systemName: "xmark")
-                        .font(.system(size: 9))
-                        .foregroundStyle(.tertiary)
+            if task.status == .done {
+                Button(action: { onAction(.completedDismiss) }) {
+                    Image(systemName: "checkmark")
+                        .font(.system(size: 9, weight: .semibold))
+                        .foregroundStyle(.green)
                 }
                 .buttonStyle(.plain)
             }
+
+            Button(action: { onAction(.dismiss) }) {
+                Image(systemName: "xmark")
+                    .font(.system(size: 9))
+                    .foregroundStyle(.tertiary)
+            }
+            .buttonStyle(.plain)
         }
         .padding(.vertical, 2)
         .padding(.horizontal, 4)
-        .background(.ultraThinMaterial) // opaque background hides swipe indicators
     }
 
     private var contextPill: some View {
@@ -202,22 +173,5 @@ struct TaskRowView: View {
         case let c where c.contains("xcode"): .cyan
         default: .gray
         }
-    }
-
-    private var swipeGesture: some Gesture {
-        DragGesture(minimumDistance: 30, coordinateSpace: .local)
-            .onChanged { value in
-                offset = value.translation.width
-            }
-            .onEnded { value in
-                withAnimation(.spring(response: 0.3)) {
-                    if value.translation.width < -60 {
-                        onAction(.markDone)
-                    } else if value.translation.width > 60 {
-                        onAction(.togglePause)
-                    }
-                    offset = 0
-                }
-            }
     }
 }

@@ -37,17 +37,6 @@ final class TaskStore {
         activeTasks.count
     }
 
-    /// Tasks marked done more than 5 minutes ago are hidden
-    var visibleTasks: [WhiplashTask] {
-        let cutoff = Date().addingTimeInterval(-300)
-        return tasks.filter { task in
-            if task.status == .done {
-                return task.updatedAt > cutoff
-            }
-            return true
-        }
-    }
-
     func addTask(title: String, context: String, projectPath: String? = nil, gitBranch: String? = nil) {
         let task = WhiplashTask(title: title, context: context, projectPath: projectPath, gitBranch: gitBranch)
         tasks.append(task)
@@ -61,6 +50,7 @@ final class TaskStore {
         saveTasks()
     }
 
+    /// Pause toggle removed from GUI; kept for CLI compatibility.
     func togglePause(_ id: UUID) {
         guard let index = tasks.firstIndex(where: { $0.id == id }) else { return }
         let current = tasks[index].status
@@ -168,14 +158,6 @@ final class TaskStore {
                 }
             }
         }
-
-        // 4. Auto-dismiss done auto-detected tasks older than 5 minutes
-        let cutoff = Date().addingTimeInterval(-300)
-        let beforeCount = tasks.count
-        tasks.removeAll { task in
-            task.isAutoDetected && task.status == .done && task.updatedAt < cutoff
-        }
-        if tasks.count != beforeCount { changed = true }
 
         if changed { saveTasks() }
     }

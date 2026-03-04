@@ -10,7 +10,6 @@
 		184386F4497A970E5FE41378 /* Task.swift in Sources */ = {isa = PBXBuildFile; fileRef = B34F159F08467AF849A6A576 /* Task.swift */; };
 		1AFDC60503262D53DF77C6A0 /* TaskListView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F545B5A4FF6BEEAC016A09B9 /* TaskListView.swift */; };
 		22A5AC62FF408830A4E7D176 /* AddTaskView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2CE6DEC1AED6E225EEEF3CB7 /* AddTaskView.swift */; };
-		3DCC95977B3205A73FA9F497 /* TrackpadSwipeDetector.swift in Sources */ = {isa = PBXBuildFile; fileRef = 89E50BEA476FAB1E0AB43D55 /* TrackpadSwipeDetector.swift */; };
 		3DE057CBB2835DEDCCD7EC67 /* TimeFormatter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 91611C6587603F9DC74F3A7D /* TimeFormatter.swift */; };
 		46EACD1278D6AC6F5366297B /* WhiplashApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6EEA52759B742134971DAD4C /* WhiplashApp.swift */; };
 		6E8C3E887521A66AABAAFC5D /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 0928AFB860E323EFD49D7D60 /* Assets.xcassets */; };
@@ -34,7 +33,6 @@
 		6522F0C0B8FD5997CEFA4CE0 /* AISession.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AISession.swift; sourceTree = "<group>"; };
 		6DF9F1A120858299758D95D2 /* StatusBarController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StatusBarController.swift; sourceTree = "<group>"; };
 		6EEA52759B742134971DAD4C /* WhiplashApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WhiplashApp.swift; sourceTree = "<group>"; };
-		89E50BEA476FAB1E0AB43D55 /* TrackpadSwipeDetector.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TrackpadSwipeDetector.swift; sourceTree = "<group>"; };
 		90E2F5E3FC9B8630C5C57833 /* ProcessWatcher.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProcessWatcher.swift; sourceTree = "<group>"; };
 		91611C6587603F9DC74F3A7D /* TimeFormatter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TimeFormatter.swift; sourceTree = "<group>"; };
 		A7B1255A15B1A790120CE165 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
@@ -102,7 +100,6 @@
 				6DF9F1A120858299758D95D2 /* StatusBarController.swift */,
 				F545B5A4FF6BEEAC016A09B9 /* TaskListView.swift */,
 				E8A27AD378D2A57896B6B30A /* TaskRowView.swift */,
-				89E50BEA476FAB1E0AB43D55 /* TrackpadSwipeDetector.swift */,
 				6EEA52759B742134971DAD4C /* WhiplashApp.swift */,
 				9E4A545A50A5ACDC8C084BA8 /* Models */,
 				7CDE22CE03B88A7BE19401A6 /* Services */,
@@ -194,7 +191,6 @@
 				8C9A482C931BBAA80595A05E /* TaskRowView.swift in Sources */,
 				DCF592595EE12C6807A4798F /* TaskStore.swift in Sources */,
 				3DE057CBB2835DEDCCD7EC67 /* TimeFormatter.swift in Sources */,
-				3DCC95977B3205A73FA9F497 /* TrackpadSwipeDetector.swift in Sources */,
 				46EACD1278D6AC6F5366297B /* WhiplashApp.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
