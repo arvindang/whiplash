@@ -29,6 +29,10 @@ final class TaskStore {
         tasks.filter { $0.status != .done }
     }
 
+    var activeOrWaitingCount: Int {
+        tasks.count { $0.status == .active || $0.status == .waiting }
+    }
+
     var activeCount: Int {
         activeTasks.count
     }
@@ -61,12 +65,17 @@ final class TaskStore {
         guard let index = tasks.firstIndex(where: { $0.id == id }) else { return }
         let current = tasks[index].status
         tasks[index].status = current == .paused ? .active : .paused
+        tasks[index].manuallyCompleted = false
         tasks[index].updatedAt = Date()
         saveTasks()
     }
 
     func markDone(_ id: UUID) {
-        updateStatus(id, status: .done)
+        guard let index = tasks.firstIndex(where: { $0.id == id }) else { return }
+        tasks[index].status = .done
+        tasks[index].manuallyCompleted = true
+        tasks[index].updatedAt = Date()
+        saveTasks()
     }
 
     func dismissTask(_ id: UUID) {
@@ -123,8 +132,19 @@ final class TaskStore {
                 }
 
                 if session.isProcessRunning {
-                    // Revive if was done but session is running again
-                    if tasks[i].status == .done {
+                    // Revive if was done but session is running again (unless manually completed)
+                    if tasks[i].status == .done && !tasks[i].manuallyCompleted {
+                        tasks[i].status = .active
+                        tasks[i].updatedAt = Date()
+                        changed = true
+                    }
+
+                    // Transition active ↔ waiting based on session state
+                    if session.isWaitingForInput && tasks[i].status == .active {
+                        tasks[i].status = .waiting
+                        tasks[i].updatedAt = Date()
+                        changed = true
+                    } else if !session.isWaitingForInput && tasks[i].status == .waiting {
                         tasks[i].status = .active
                         tasks[i].updatedAt = Date()
                         changed = true
@@ -133,6 +153,7 @@ final class TaskStore {
                     // Process not running — mark done
                     if tasks[i].status != .done {
                         tasks[i].status = .done
+                        tasks[i].manuallyCompleted = false
                         tasks[i].updatedAt = Date()
                         changed = true
                     }
@@ -141,6 +162,7 @@ final class TaskStore {
                 // Session not in scan results at all — mark done
                 if tasks[i].status != .done {
                     tasks[i].status = .done
+                    tasks[i].manuallyCompleted = false
                     tasks[i].updatedAt = Date()
                     changed = true
                 }

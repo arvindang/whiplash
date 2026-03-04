@@ -19,7 +19,7 @@ actor SummaryProvider {
         }
 
         let fileURL = sessionFileURL(projectPath: projectPath, sessionId: sessionId)
-        let result = extractLastUserMessage(from: fileURL)
+        let result = extractFirstUserMessage(from: fileURL)
 
         if let result {
             cache[sessionId] = result
@@ -40,19 +40,16 @@ actor SummaryProvider {
             .appendingPathComponent("\(sessionId).jsonl")
     }
 
-    private func extractLastUserMessage(from url: URL) -> String? {
+    private func extractFirstUserMessage(from url: URL) -> String? {
         guard let handle = try? FileHandle(forReadingFrom: url) else { return nil }
         defer { try? handle.close() }
 
-        let fileSize = handle.seekToEndOfFile()
-        let readSize: UInt64 = 8192
-        let readStart = fileSize > readSize ? fileSize - readSize : 0
-        handle.seek(toFileOffset: readStart)
-        let data = handle.readDataToEndOfFile()
+        // Read first 8KB to find the initial user query
+        let data = handle.readData(ofLength: 8192)
 
         guard let content = String(data: data, encoding: .utf8) else { return nil }
 
-        let lines = content.components(separatedBy: "\n").reversed()
+        let lines = content.components(separatedBy: "\n")
         for line in lines {
             let trimmed = line.trimmingCharacters(in: .whitespacesAndNewlines)
             guard !trimmed.isEmpty,
@@ -73,7 +70,7 @@ actor SummaryProvider {
             }
 
             guard var text else { continue }
-            if text.hasPrefix("<command-name>") || text.hasPrefix("<local-command") { continue }
+            if text.hasPrefix("<command-name>") || text.hasPrefix("<local-command") || text.hasPrefix("<system-reminder>") { continue }
 
             // Take first line only, truncate for display
             text = text.components(separatedBy: "\n").first ?? text

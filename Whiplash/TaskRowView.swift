@@ -65,6 +65,7 @@ struct TaskRowView: View {
         .padding(.horizontal, 10)
         .padding(.vertical, 6)
         .opacity(task.status == .done ? 0.5 : 1.0)
+    .animation(.easeInOut(duration: 0.3), value: task.status)
     }
 
     @ViewBuilder
@@ -108,10 +109,16 @@ struct TaskRowView: View {
                 .fill(statusColor)
                 .frame(width: 6, height: 6)
 
-            VStack(alignment: .leading, spacing: 2) {
-                Text(task.title)
-                    .font(.system(size: 12, weight: .medium, design: .monospaced))
-                    .lineLimit(1)
+            VStack(alignment: .leading, spacing: 3) {
+                HStack {
+                    Text(task.title)
+                        .font(.system(size: 12, weight: .medium, design: .monospaced))
+                        .lineLimit(1)
+                    Spacer()
+                    Text(TimeFormatter.relativeTime(from: task.updatedAt))
+                        .font(.system(size: 10, design: .monospaced))
+                        .foregroundStyle(.tertiary)
+                }
 
                 HStack(spacing: 6) {
                     contextPill
@@ -124,9 +131,6 @@ struct TaskRowView: View {
                             .foregroundStyle(.secondary)
                             .lineLimit(1)
                     }
-                    Text(TimeFormatter.relativeTime(from: task.updatedAt))
-                        .font(.system(size: 10, design: .monospaced))
-                        .foregroundStyle(.tertiary)
                 }
             }
 
@@ -160,6 +164,7 @@ struct TaskRowView: View {
         case .active: .green
         case .paused: .orange
         case .done: .gray
+        case .waiting: .yellow
         }
     }
 

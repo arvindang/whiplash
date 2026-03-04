@@ -13,6 +13,7 @@ final class StatusBarController {
     private var historyWatcher: FileWatcher?
     private var geminiWatcher: FileWatcher?
     private let taskStore = TaskStore.shared
+    private var processWatcher: ProcessWatcher?
 
     init() {
         statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
@@ -21,6 +22,7 @@ final class StatusBarController {
         setupButton()
         setupPopover()
         setupHotKey()
+        setupProcessWatcher()
         startSessionScanning()
     }
 
@@ -50,6 +52,22 @@ final class StatusBarController {
         }
     }
 
+    private func setupProcessWatcher() {
+        processWatcher = ProcessWatcher { [weak self] pid in
+            guard let self else { return }
+            // PID exited — immediately mark the task done and rescan
+            for i in self.taskStore.tasks.indices {
+                if self.taskStore.tasks[i].pid == pid && self.taskStore.tasks[i].status != .done {
+                    self.taskStore.tasks[i].status = .done
+                    self.taskStore.tasks[i].manuallyCompleted = false
+                    self.taskStore.tasks[i].updatedAt = Date()
+                }
+            }
+            self.taskStore.saveTasks()
+            self.performScan()
+        }
+    }
+
     private func startSessionScanning() {
         // Initial scan on startup
         performScan()
@@ -72,8 +90,8 @@ final class StatusBarController {
             }
         }
 
-        // Timer-based polling at 15s for detecting process exits
-        scanTimer = Timer.scheduledTimer(withTimeInterval: 15, repeats: true) { [weak self] _ in
+        // Timer-based polling at 30s (PID watcher handles latency-sensitive exit detection)
+        scanTimer = Timer.scheduledTimer(withTimeInterval: 30, repeats: true) { [weak self] _ in
             guard let self else { return }
             Task { @MainActor [weak self] in
                 self?.performScan()
@@ -86,6 +104,14 @@ final class StatusBarController {
             guard let self else { return }
             let sessions = await self.sessionScanner.scanForSessions()
             self.taskStore.reconcileAISessions(sessions)
+
+            // Sync PID watcher with currently active task PIDs
+            let activePIDs = Set(
+                self.taskStore.tasks
+                    .filter { $0.isAutoDetected && $0.status != .done }
+                    .compactMap { $0.pid }
+            )
+            self.processWatcher?.sync(to: activePIDs)
         }
     }
 

@@ -27,9 +27,11 @@ struct AddTaskView: View {
                         .fill(Color.secondary.opacity(0.15))
                 )
 
-            HStack(spacing: 6) {
-                ForEach(contexts, id: \.self) { ctx in
-                    contextButton(ctx)
+            ScrollView(.horizontal, showsIndicators: false) {
+                HStack(spacing: 6) {
+                    ForEach(contexts, id: \.self) { ctx in
+                        contextButton(ctx)
+                    }
                 }
             }
 
@@ -83,10 +85,11 @@ struct AddTaskView: View {
     private func contextButton(_ context: String) -> some View {
         Button(action: { selectedContext = context }) {
             Text(context)
-                .font(.system(size: 9, weight: .medium, design: .monospaced))
+                .font(.system(size: 10, weight: .medium, design: .monospaced))
+                .fixedSize()
                 .foregroundStyle(selectedContext == context ? .white : .secondary)
-                .padding(.horizontal, 6)
-                .padding(.vertical, 3)
+                .padding(.horizontal, 8)
+                .padding(.vertical, 4)
                 .background(
                     Capsule()
                         .fill(selectedContext == context ? AnyShapeStyle(Color.blue) : AnyShapeStyle(.quaternary))

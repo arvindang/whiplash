@@ -24,4 +24,5 @@ struct AISession: Sendable {
     let lastActivityTimestamp: Date
     let isProcessRunning: Bool
     let terminalApp: String?
+    let isWaitingForInput: Bool
 }

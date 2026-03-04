@@ -14,10 +14,13 @@ struct WhiplashTask: Identifiable, Codable, Sendable {
     var pid: Int32?
     var terminalApp: String?
 
+    var manuallyCompleted: Bool
+
     enum TaskStatus: String, Codable, Sendable {
         case active
         case paused
         case done
+        case waiting
     }
 
     init(
@@ -32,7 +35,8 @@ struct WhiplashTask: Identifiable, Codable, Sendable {
         projectPath: String? = nil,
         gitBranch: String? = nil,
         pid: Int32? = nil,
-        terminalApp: String? = nil
+        terminalApp: String? = nil,
+        manuallyCompleted: Bool = false
     ) {
         self.id = id
         self.title = title
@@ -46,6 +50,7 @@ struct WhiplashTask: Identifiable, Codable, Sendable {
         self.gitBranch = gitBranch
         self.pid = pid
         self.terminalApp = terminalApp
+        self.manuallyCompleted = manuallyCompleted
     }
 
     init(from decoder: Decoder) throws {
@@ -62,5 +67,6 @@ struct WhiplashTask: Identifiable, Codable, Sendable {
         gitBranch = try container.decodeIfPresent(String.self, forKey: .gitBranch)
         pid = try container.decodeIfPresent(Int32.self, forKey: .pid)
         terminalApp = try container.decodeIfPresent(String.self, forKey: .terminalApp)
+        manuallyCompleted = try container.decodeIfPresent(Bool.self, forKey: .manuallyCompleted) ?? false
     }
 }

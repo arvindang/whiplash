@@ -17,11 +17,13 @@ struct WhiplashTask: Identifiable, Codable {
     var gitBranch: String?
     var pid: Int32?
     var terminalApp: String?
+    var manuallyCompleted: Bool
 
     enum TaskStatus: String, Codable {
         case active
         case paused
         case done
+        case waiting
     }
 
     init(
@@ -33,7 +35,8 @@ struct WhiplashTask: Identifiable, Codable {
         updatedAt: Date = Date(),
         isAutoDetected: Bool = false,
         projectPath: String? = nil,
-        gitBranch: String? = nil
+        gitBranch: String? = nil,
+        manuallyCompleted: Bool = false
     ) {
         self.id = id
         self.title = title
@@ -44,6 +47,7 @@ struct WhiplashTask: Identifiable, Codable {
         self.isAutoDetected = isAutoDetected
         self.projectPath = projectPath
         self.gitBranch = gitBranch
+        self.manuallyCompleted = manuallyCompleted
     }
 
     init(from decoder: Decoder) throws {
@@ -60,6 +64,7 @@ struct WhiplashTask: Identifiable, Codable {
         gitBranch = try container.decodeIfPresent(String.self, forKey: .gitBranch)
         pid = try container.decodeIfPresent(Int32.self, forKey: .pid)
         terminalApp = try container.decodeIfPresent(String.self, forKey: .terminalApp)
+        manuallyCompleted = try container.decodeIfPresent(Bool.self, forKey: .manuallyCompleted) ?? false
     }
 }
 
@@ -138,7 +143,13 @@ func listTasks() {
 
     for task in active {
         let prefix = task.id.uuidString.prefix(8)
-        let status = task.status == .paused ? "⏸" : "⚡"
+        let status: String
+        switch task.status {
+        case .active: status = "⚡"
+        case .paused: status = "⏸"
+        case .waiting: status = "⏳"
+        case .done: status = "✓"
+        }
         let auto = task.isAutoDetected ? " (auto)" : ""
         let terminal = task.terminalApp.map { " [\($0)]" } ?? ""
         print("\(status) [\(prefix)] \(task.title) — \(task.context)\(terminal)\(auto)")

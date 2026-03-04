@@ -96,6 +96,22 @@ actor SessionScanner {
                 pidsByTool[tool, default: []].insert(pid)
             }
         }
+
+        // Detect node-based AI CLIs (e.g., Gemini CLI runs as "node /path/to/bin/gemini")
+        let nodeBasedTools: [(pattern: String, tool: AITool)] = [
+            ("bin/gemini", .gemini),
+        ]
+
+        for (pattern, tool) in nodeBasedTools {
+            if let output = runProcess("/usr/bin/pgrep", arguments: ["-f", pattern]) {
+                for line in output.components(separatedBy: "\n") {
+                    if let pid = Int32(line.trimmingCharacters(in: .whitespaces)) {
+                        pidsByTool[tool, default: []].insert(pid)
+                    }
+                }
+            }
+        }
+
         return (pidsByTool, processMap)
     }
 
@@ -140,6 +156,7 @@ actor SessionScanner {
         let projectPath: String
         let gitBranch: String?
         let lastTimestamp: Date
+        let isWaitingForInput: Bool
     }
 
     private func scanClaudeSessionFiles() -> [RawSession] {
@@ -222,12 +239,88 @@ actor SessionScanner {
 
         guard let projectPath = cwd, let timestamp = lastTimestamp else { return nil }
 
+        // Only show sessions where the user has sent a real prompt
+        handle.seek(toFileOffset: 0)
+        let headData = handle.readData(ofLength: 8192)
+        guard let headContent = String(data: headData, encoding: .utf8),
+              hasRealUserMessage(in: headContent) else { return nil }
+
+        let isWaiting = detectWaitingState(in: content)
+
         return RawSession(
             sessionId: sessionId,
             projectPath: projectPath,
             gitBranch: gitBranch,
-            lastTimestamp: timestamp
+            lastTimestamp: timestamp,
+            isWaitingForInput: isWaiting
         )
+    }
+
+    private func hasRealUserMessage(in content: String) -> Bool {
+        for line in content.components(separatedBy: "\n") {
+            let trimmed = line.trimmingCharacters(in: .whitespacesAndNewlines)
+            guard !trimmed.isEmpty,
+                  let data = trimmed.data(using: .utf8),
+                  let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any]
+            else { continue }
+
+            guard json["type"] as? String == "user" else { continue }
+            if json["isMeta"] as? Bool == true { continue }
+
+            guard let message = json["message"] as? [String: Any] else { continue }
+            let text: String?
+            if let c = message["content"] as? String { text = c }
+            else if let arr = message["content"] as? [[String: Any]] {
+                text = arr.first(where: { $0["type"] as? String == "text" })?["text"] as? String
+            } else { text = nil }
+
+            guard let text else { continue }
+            if text.hasPrefix("<command-name>") || text.hasPrefix("<local-command") || text.hasPrefix("<system-reminder>") { continue }
+
+            return true
+        }
+        return false
+    }
+
+    /// Detect whether a Claude session is waiting for user input by examining
+    /// the last few JSONL entries. Returns true if the AI has finished its turn.
+    private func detectWaitingState(in content: String) -> Bool {
+        let lines = content.components(separatedBy: "\n").reversed()
+        for line in lines {
+            let trimmed = line.trimmingCharacters(in: .whitespacesAndNewlines)
+            guard !trimmed.isEmpty,
+                  let data = trimmed.data(using: .utf8),
+                  let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any]
+            else { continue }
+
+            // turn_duration subtype means the assistant's turn just ended → waiting
+            if let subtype = json["subtype"] as? String, subtype == "turn_duration" {
+                return true
+            }
+
+            let type = json["type"] as? String
+
+            // If last meaningful entry is user or has tool_use/tool_result → actively working
+            if type == "user" {
+                return false
+            }
+
+            if type == "assistant" {
+                // Check if the assistant message contains tool_use (still working)
+                if let message = json["message"] as? [String: Any],
+                   let content = message["content"] as? [[String: Any]] {
+                    let hasToolUse = content.contains { ($0["type"] as? String) == "tool_use" }
+                    if hasToolUse { return false }
+                }
+                // Assistant message without tool_use → waiting for user
+                return true
+            }
+
+            if type == "tool_result" {
+                return false
+            }
+        }
+        return false
     }
 
     // MARK: - Gemini Session Scanning
@@ -317,7 +410,8 @@ actor SessionScanner {
             sessionId: finalSessionId,
             projectPath: projectPath,
             gitBranch: gitBranch,
-            lastTimestamp: lastUpdated
+            lastTimestamp: lastUpdated,
+            isWaitingForInput: false
         )
     }
 
@@ -340,7 +434,8 @@ actor SessionScanner {
                 pid: pid,
                 lastActivityTimestamp: Date(),
                 isProcessRunning: true,
-                terminalApp: terminal
+                terminalApp: terminal,
+                isWaitingForInput: false
             ))
         }
         return sessions
@@ -454,7 +549,8 @@ actor SessionScanner {
                 pid: matchedPID,
                 lastActivityTimestamp: session.lastTimestamp,
                 isProcessRunning: matchedPID != nil,
-                terminalApp: terminal
+                terminalApp: terminal,
+                isWaitingForInput: session.isWaitingForInput
             )
         }
     }

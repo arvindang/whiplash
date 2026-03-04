@@ -15,6 +15,7 @@
 		46EACD1278D6AC6F5366297B /* WhiplashApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6EEA52759B742134971DAD4C /* WhiplashApp.swift */; };
 		6E8C3E887521A66AABAAFC5D /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 0928AFB860E323EFD49D7D60 /* Assets.xcassets */; };
 		82F0C2EB34DD5134546A8D60 /* FileWatcher.swift in Sources */ = {isa = PBXBuildFile; fileRef = ADA7B6710D0B46FDCCDF70FA /* FileWatcher.swift */; };
+		843F0491B9B8F2CA02A326FD /* ProcessWatcher.swift in Sources */ = {isa = PBXBuildFile; fileRef = 90E2F5E3FC9B8630C5C57833 /* ProcessWatcher.swift */; };
 		85934BF62CA6E3F203CB4FC3 /* HotKeyManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = BAA2C08409A4ADD7F72D63F8 /* HotKeyManager.swift */; };
 		8C9A482C931BBAA80595A05E /* TaskRowView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E8A27AD378D2A57896B6B30A /* TaskRowView.swift */; };
 		9DC15D79E3466A211AD03011 /* SummaryProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = CBEB292BB4759F058A7EB330 /* SummaryProvider.swift */; };
@@ -34,6 +35,7 @@
 		6DF9F1A120858299758D95D2 /* StatusBarController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StatusBarController.swift; sourceTree = "<group>"; };
 		6EEA52759B742134971DAD4C /* WhiplashApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WhiplashApp.swift; sourceTree = "<group>"; };
 		89E50BEA476FAB1E0AB43D55 /* TrackpadSwipeDetector.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TrackpadSwipeDetector.swift; sourceTree = "<group>"; };
+		90E2F5E3FC9B8630C5C57833 /* ProcessWatcher.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProcessWatcher.swift; sourceTree = "<group>"; };
 		91611C6587603F9DC74F3A7D /* TimeFormatter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TimeFormatter.swift; sourceTree = "<group>"; };
 		A7B1255A15B1A790120CE165 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
 		ADA7B6710D0B46FDCCDF70FA /* FileWatcher.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FileWatcher.swift; sourceTree = "<group>"; };
@@ -74,6 +76,7 @@
 			isa = PBXGroup;
 			children = (
 				ADA7B6710D0B46FDCCDF70FA /* FileWatcher.swift */,
+				90E2F5E3FC9B8630C5C57833 /* ProcessWatcher.swift */,
 				14ED920EBFEAF2D85BED3D0F /* SessionScanner.swift */,
 				CBEB292BB4759F058A7EB330 /* SummaryProvider.swift */,
 			);
@@ -182,6 +185,7 @@
 				22A5AC62FF408830A4E7D176 /* AddTaskView.swift in Sources */,
 				82F0C2EB34DD5134546A8D60 /* FileWatcher.swift in Sources */,
 				85934BF62CA6E3F203CB4FC3 /* HotKeyManager.swift in Sources */,
+				843F0491B9B8F2CA02A326FD /* ProcessWatcher.swift in Sources */,
 				D989BB11AB0B74912CDA8516 /* SessionScanner.swift in Sources */,
 				BB67C47FB63449D82702DE0C /* StatusBarController.swift in Sources */,
 				9DC15D79E3466A211AD03011 /* SummaryProvider.swift in Sources */,
