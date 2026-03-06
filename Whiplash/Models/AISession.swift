@@ -25,4 +25,5 @@ struct AISession: Sendable {
     let isProcessRunning: Bool
     let terminalApp: String?
     let isWaitingForInput: Bool
+    let sessionFilePath: String?
 }

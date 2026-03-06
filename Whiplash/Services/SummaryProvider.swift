@@ -70,7 +70,7 @@ actor SummaryProvider {
             }
 
             guard var text else { continue }
-            if text.hasPrefix("<command-name>") || text.hasPrefix("<local-command") || text.hasPrefix("<system-reminder>") { continue }
+            if text.hasPrefix("<command-name>") || text.hasPrefix("<local-command") || text.hasPrefix("<system-reminder>") || text.hasPrefix("[Request interrupted") { continue }
 
             // Take first line only, truncate for display
             text = text.components(separatedBy: "\n").first ?? text

@@ -6,9 +6,23 @@ struct ProjectInfo: Sendable {
     let gitBranch: String?
 }
 
+private struct CachedValue<T: Sendable>: Sendable {
+    let value: T
+    let cachedAt: Date
+    func isValid(ttl: TimeInterval) -> Bool {
+        Date().timeIntervalSince(cachedAt) < ttl
+    }
+}
+
 actor SessionScanner {
     private let claudeDir: URL
     private let geminiDir: URL
+
+    // Caches
+    private var gitBranchCache: [String: CachedValue<String?>] = [:]
+    private var cwdCache: [Int32: CachedValue<String?>] = [:]
+    private var realUserMessageSessions: Set<String> = []
+    private var dirListingCache: [String: (mtime: Date, contents: [URL])] = [:]
 
     init() {
         let home = FileManager.default.homeDirectoryForCurrentUser
@@ -157,15 +171,16 @@ actor SessionScanner {
         let gitBranch: String?
         let lastTimestamp: Date
         let isWaitingForInput: Bool
+        let filePath: String?
     }
 
     private func scanClaudeSessionFiles() -> [RawSession] {
         let projectsDir = claudeDir.appendingPathComponent("projects")
         let fm = FileManager.default
 
-        guard let projectDirs = try? fm.contentsOfDirectory(
+        guard let projectDirs = cachedContentsOfDirectory(
             at: projectsDir,
-            includingPropertiesForKeys: [.isDirectoryKey]
+            keys: [.isDirectoryKey]
         ) else { return [] }
 
         var results: [RawSession] = []
@@ -186,7 +201,7 @@ actor SessionScanner {
                       modDate > cutoff else { continue }
 
                 let sessionId = file.deletingPathExtension().lastPathComponent
-                if let session = parseClaudeSessionFile(file, sessionId: sessionId) {
+                if let session = parseClaudeSessionFile(file, sessionId: sessionId, filePath: file.path) {
                     results.append(session)
                 }
             }
@@ -195,7 +210,7 @@ actor SessionScanner {
         return results
     }
 
-    private func parseClaudeSessionFile(_ url: URL, sessionId: String) -> RawSession? {
+    private func parseClaudeSessionFile(_ url: URL, sessionId: String, filePath: String) -> RawSession? {
         guard let handle = try? FileHandle(forReadingFrom: url) else { return nil }
         defer { try? handle.close() }
 
@@ -239,11 +254,14 @@ actor SessionScanner {
 
         guard let projectPath = cwd, let timestamp = lastTimestamp else { return nil }
 
-        // Only show sessions where the user has sent a real prompt
-        handle.seek(toFileOffset: 0)
-        let headData = handle.readData(ofLength: 8192)
-        guard let headContent = String(data: headData, encoding: .utf8),
-              hasRealUserMessage(in: headContent) else { return nil }
+        // Only show sessions where the user has sent a real prompt (cached once confirmed)
+        if !realUserMessageSessions.contains(sessionId) {
+            handle.seek(toFileOffset: 0)
+            let headData = handle.readData(ofLength: 8192)
+            guard let headContent = String(data: headData, encoding: .utf8),
+                  hasRealUserMessage(in: headContent) else { return nil }
+            realUserMessageSessions.insert(sessionId)
+        }
 
         let isWaiting = detectWaitingState(in: content)
 
@@ -252,7 +270,8 @@ actor SessionScanner {
             projectPath: projectPath,
             gitBranch: gitBranch,
             lastTimestamp: timestamp,
-            isWaitingForInput: isWaiting
+            isWaitingForInput: isWaiting,
+            filePath: filePath
         )
     }
 
@@ -275,7 +294,7 @@ actor SessionScanner {
             } else { text = nil }
 
             guard let text else { continue }
-            if text.hasPrefix("<command-name>") || text.hasPrefix("<local-command") || text.hasPrefix("<system-reminder>") { continue }
+            if text.hasPrefix("<command-name>") || text.hasPrefix("<local-command") || text.hasPrefix("<system-reminder>") || text.hasPrefix("[Request interrupted") { continue }
 
             return true
         }
@@ -329,9 +348,9 @@ actor SessionScanner {
         let tmpDir = geminiDir.appendingPathComponent("tmp")
         let fm = FileManager.default
 
-        guard let projectDirs = try? fm.contentsOfDirectory(
+        guard let projectDirs = cachedContentsOfDirectory(
             at: tmpDir,
-            includingPropertiesForKeys: [.isDirectoryKey]
+            keys: [.isDirectoryKey]
         ) else { return [] }
 
         let cutoff = Date().addingTimeInterval(-600) // 10 minutes
@@ -411,7 +430,8 @@ actor SessionScanner {
             projectPath: projectPath,
             gitBranch: gitBranch,
             lastTimestamp: lastUpdated,
-            isWaitingForInput: false
+            isWaitingForInput: false,
+            filePath: nil
         )
     }
 
@@ -435,7 +455,8 @@ actor SessionScanner {
                 lastActivityTimestamp: Date(),
                 isProcessRunning: true,
                 terminalApp: terminal,
-                isWaitingForInput: false
+                isWaitingForInput: false,
+                sessionFilePath: nil
             ))
         }
         return sessions
@@ -472,19 +493,29 @@ actor SessionScanner {
     }
 
     private func resolveCwd(forPID pid: Int32) -> String? {
+        if let cached = cwdCache[pid], cached.isValid(ttl: 5) {
+            return cached.value
+        }
         guard let output = runProcess(
             "/usr/sbin/lsof",
             arguments: ["-a", "-p", "\(pid)", "-d", "cwd", "-Fn"]
-        ) else { return nil }
+        ) else {
+            cwdCache[pid] = CachedValue(value: nil, cachedAt: Date())
+            return nil
+        }
 
         for line in output.components(separatedBy: "\n") {
             if line.hasPrefix("n/") {
                 let path = String(line.dropFirst())
                 // Skip root directory — lsof returns "/" when cwd is unavailable
-                if path != "/" { return path }
+                if path != "/" {
+                    cwdCache[pid] = CachedValue(value: path, cachedAt: Date())
+                    return path
+                }
                 break
             }
         }
+        cwdCache[pid] = CachedValue(value: nil, cachedAt: Date())
         return nil
     }
 
@@ -503,12 +534,20 @@ actor SessionScanner {
     }
 
     private func detectGitBranch(atPath path: String) -> String? {
+        if let cached = gitBranchCache[path], cached.isValid(ttl: 30) {
+            return cached.value
+        }
         guard let output = runProcess(
             "/usr/bin/git",
             arguments: ["-C", path, "branch", "--show-current"]
-        ) else { return nil }
+        ) else {
+            gitBranchCache[path] = CachedValue(value: nil, cachedAt: Date())
+            return nil
+        }
         let branch = output.trimmingCharacters(in: .whitespacesAndNewlines)
-        return branch.isEmpty ? nil : branch
+        let result = branch.isEmpty ? nil : branch
+        gitBranchCache[path] = CachedValue(value: result, cachedAt: Date())
+        return result
     }
 
     private func mergeSessions(
@@ -550,12 +589,33 @@ actor SessionScanner {
                 lastActivityTimestamp: session.lastTimestamp,
                 isProcessRunning: matchedPID != nil,
                 terminalApp: terminal,
-                isWaitingForInput: session.isWaitingForInput
+                isWaitingForInput: session.isWaitingForInput,
+                sessionFilePath: session.filePath
             )
         }
     }
 
     // MARK: - Helpers
+
+    /// Returns cached directory contents if the directory's mtime hasn't changed.
+    private func cachedContentsOfDirectory(at url: URL, keys: [URLResourceKey]) -> [URL]? {
+        let fm = FileManager.default
+        let path = url.path
+        if let attrs = try? fm.attributesOfItem(atPath: path),
+           let currentMtime = attrs[.modificationDate] as? Date,
+           let cached = dirListingCache[path],
+           cached.mtime == currentMtime {
+            return cached.contents
+        }
+        guard let contents = try? fm.contentsOfDirectory(at: url, includingPropertiesForKeys: keys) else {
+            return nil
+        }
+        if let attrs = try? fm.attributesOfItem(atPath: path),
+           let mtime = attrs[.modificationDate] as? Date {
+            dirListingCache[path] = (mtime: mtime, contents: contents)
+        }
+        return contents
+    }
 
     private func runProcess(_ path: String, arguments: [String]) -> String? {
         let process = Process()

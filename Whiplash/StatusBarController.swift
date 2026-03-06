@@ -14,6 +14,8 @@ final class StatusBarController {
     private var geminiWatcher: FileWatcher?
     private let taskStore = TaskStore.shared
     private var processWatcher: ProcessWatcher?
+    private var sessionWatchers: [String: FileWatcher] = [:]
+    private var scanDebounceTimer: Timer?
 
     init() {
         statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
@@ -90,7 +92,7 @@ final class StatusBarController {
             }
         }
 
-        // Timer-based polling at 30s (PID watcher handles latency-sensitive exit detection)
+        // Timer-based polling at 30s as safety net (file watchers handle latency-sensitive detection)
         scanTimer = Timer.scheduledTimer(withTimeInterval: 30, repeats: true) { [weak self] _ in
             guard let self else { return }
             Task { @MainActor [weak self] in
@@ -104,6 +106,7 @@ final class StatusBarController {
             guard let self else { return }
             let sessions = await self.sessionScanner.scanForSessions()
             self.taskStore.reconcileAISessions(sessions)
+            self.syncSessionWatchers(sessions: sessions)
 
             // Sync PID watcher with currently active task PIDs
             let activePIDs = Set(
@@ -112,6 +115,40 @@ final class StatusBarController {
                     .compactMap { $0.pid }
             )
             self.processWatcher?.sync(to: activePIDs)
+        }
+    }
+
+    private func syncSessionWatchers(sessions: [AISession]) {
+        let activeClaudeSessions = sessions.filter {
+            $0.isProcessRunning && $0.sessionFilePath != nil
+        }
+        let activeIds = Set(activeClaudeSessions.map(\.sessionId))
+
+        // Remove watchers for sessions no longer active
+        for id in sessionWatchers.keys where !activeIds.contains(id) {
+            sessionWatchers.removeValue(forKey: id)
+        }
+
+        // Add watchers for new active sessions
+        for session in activeClaudeSessions {
+            guard sessionWatchers[session.sessionId] == nil,
+                  let path = session.sessionFilePath else { continue }
+            let url = URL(fileURLWithPath: path)
+            sessionWatchers[session.sessionId] = FileWatcher(url: url) { [weak self] in
+                Task { @MainActor [weak self] in
+                    self?.debouncedScan()
+                }
+            }
+        }
+    }
+
+    private func debouncedScan() {
+        scanDebounceTimer?.invalidate()
+        scanDebounceTimer = Timer.scheduledTimer(withTimeInterval: 2.0, repeats: false) { [weak self] _ in
+            guard let self else { return }
+            Task { @MainActor [weak self] in
+                self?.performScan()
+            }
         }
     }
 

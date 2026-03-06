@@ -5,6 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Whiplash — Menu Bar Task Tracker for Developers</title>
   <meta name="description" content="A macOS menu bar utility for tracking developer tasks across concurrent contexts. Open source, lightweight, no dependencies.">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%E2%9A%A1%3C/text%3E%3C/svg%3E">
+  <link rel="shortcut icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%E2%9A%A1%3C/text%3E%3C/svg%3E">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
@@ -211,7 +213,7 @@
     }
 
     .screenshot-wrapper {
-      max-width: 720px;
+      max-width: 480px;
       margin: 0 auto;
       border-radius: var(--radius);
       border: 1px solid var(--border);
@@ -478,9 +480,8 @@
   <nav>
     <div class="nav-inner">
       <div class="nav-logo">
-        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <polyline points="13 17 18 12 13 7"></polyline>
-          <polyline points="6 17 11 12 6 7"></polyline>
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor" stroke="none">
+          <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
         </svg>
         Whiplash
       </div>
@@ -504,9 +505,9 @@
       <span class="badge-dot"></span>
       Open Source
     </div>
-    <h1>Task tracking at the<br>speed of thought</h1>
+    <h1>Stay on top of your<br>coding agents</h1>
     <p class="hero-sub">
-      A macOS menu bar utility for developers who juggle multiple terminal tabs, Claude Code sessions, and concurrent contexts. Lightweight. No dependencies. Always one hotkey away.
+      A macOS menu bar utility that tracks your Claude Code, Gemini CLI, and Codex sessions in one place. See what's running, what's idle, and what's done — without switching windows.
     </p>
     <div class="hero-actions">
       <a href="#install" class="btn btn-primary">
@@ -523,16 +524,7 @@
   <!-- SCREENSHOT -->
   <div class="screenshot-section">
     <div class="screenshot-wrapper">
-      <!-- TODO: Replace with actual screenshot -->
-      <div class="screenshot-placeholder">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-          <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
-          <circle cx="8.5" cy="8.5" r="1.5"></circle>
-          <polyline points="21 15 16 10 5 21"></polyline>
-        </svg>
-        <span>Screenshot — Replace with app screenshot (recommended: 1440×900)</span>
-        <!-- <img src="screenshot.png" alt="Whiplash menu bar app"> -->
-      </div>
+      <img src="whiplash-preview.png" alt="Whiplash menu bar app showing task tracking with Claude Code session detection">
     </div>
   </div>
 
@@ -585,35 +577,20 @@
       <div class="section-label">Install</div>
       <h2 class="section-title">Get started in seconds</h2>
       <p class="section-desc">
-        Download the app directly or build from source. No installer needed — just drag and run.
+        Clone the repo and build from source. No external dependencies required.
       </p>
-      <div class="install-grid">
-        <div class="install-card">
-          <h3>
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-            Direct Download
-          </h3>
-          <p class="step-desc">Download the latest <code class="mono">.app</code> bundle and move it to your Applications folder.</p>
-          <div class="code-block">
-            <span class="comment"># Download from GitHub Releases</span><br>
-            <!-- TODO: Replace with actual release URL -->
-            <span class="cmd">curl -L -o Whiplash.zip \<br>&nbsp;&nbsp;https://github.com/arvindang/whiplash/releases/latest/download/Whiplash.zip</span><br><br>
-            <span class="cmd">unzip Whiplash.zip && mv Whiplash.app /Applications/</span>
-          </div>
-        </div>
-        <div class="install-card">
-          <h3>
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
-            Build from Source
-          </h3>
-          <p class="step-desc">Clone the repo and build with Xcode. Requires Xcode 15+ and xcodegen.</p>
-          <div class="code-block">
-            <span class="cmd">git clone https://github.com/arvindang/whiplash.git</span><br>
-            <span class="cmd">cd whiplash</span><br>
-            <span class="cmd">brew install xcodegen</span><br>
-            <span class="cmd">xcodegen generate</span><br>
-            <span class="cmd">xcodebuild -project Whiplash.xcodeproj -scheme Whiplash</span>
-          </div>
+      <div class="install-card" style="max-width: 520px;">
+        <h3>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
+          Build from Source
+        </h3>
+        <p class="step-desc">Clone the repo and build with Xcode. Requires Xcode 15+ and xcodegen.</p>
+        <div class="code-block">
+          <span class="cmd">git clone https://github.com/arvindang/whiplash.git</span><br>
+          <span class="cmd">cd whiplash</span><br>
+          <span class="cmd">brew install xcodegen</span><br>
+          <span class="cmd">xcodegen generate</span><br>
+          <span class="cmd">xcodebuild -project Whiplash.xcodeproj -scheme Whiplash</span>
         </div>
       </div>
     </div>
