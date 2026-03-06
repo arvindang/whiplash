@@ -114,7 +114,13 @@ fi
 # Step 9: Sign and notarize DMG
 echo ""
 echo "--- Step 9: Signing DMG ---"
-codesign --sign "Developer ID Application: ($TEAM_ID)" --timestamp "$DMG_PATH"
+IDENTITY=$(security find-identity -v -p codesigning | grep "Developer ID Application" | head -1 | sed 's/.*"\(.*\)".*/\1/')
+if [ -z "$IDENTITY" ]; then
+    echo "Error: No Developer ID Application identity found in keychain"
+    exit 1
+fi
+echo "Using identity: $IDENTITY"
+codesign --sign "$IDENTITY" --timestamp "$DMG_PATH"
 
 echo ""
 echo "--- Step 10: Notarizing DMG ---"
