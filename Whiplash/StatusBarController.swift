@@ -104,6 +104,7 @@ final class StatusBarController {
     private func performScan() {
         Task { @MainActor [weak self] in
             guard let self else { return }
+            self.taskStore.loadTasks() // Pick up external changes (CLI)
             let sessions = await self.sessionScanner.scanForSessions()
             self.taskStore.reconcileAISessions(sessions)
             self.syncSessionWatchers(sessions: sessions)

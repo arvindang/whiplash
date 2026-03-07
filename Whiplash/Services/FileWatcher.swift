@@ -2,15 +2,21 @@ import Foundation
 
 final class FileWatcher: @unchecked Sendable {
     private var source: DispatchSourceFileSystemObject?
-    private let fileDescriptor: CInt
+    nonisolated(unsafe) private var fileDescriptor: CInt = -1
+    private let url: URL
+    private let callback: @Sendable () -> Void
 
     init(url: URL, callback: @escaping @Sendable () -> Void) {
-        fileDescriptor = open(url.path, O_EVTONLY)
+        self.url = url
+        self.callback = callback
+        startWatching()
+    }
 
-        guard fileDescriptor >= 0 else {
-            print("FileWatcher: failed to open \(url.path)")
-            return
-        }
+    private func startWatching() {
+        source?.cancel()
+
+        fileDescriptor = open(url.path, O_EVTONLY)
+        guard fileDescriptor >= 0 else { return }
 
         let source = DispatchSource.makeFileSystemObjectSource(
             fileDescriptor: fileDescriptor,
@@ -18,12 +24,17 @@ final class FileWatcher: @unchecked Sendable {
             queue: .main
         )
 
-        source.setEventHandler {
-            callback()
+        source.setEventHandler { [weak self] in
+            guard let self else { return }
+            let flags = source.data
+            self.callback()
+            if flags.contains(.rename) || flags.contains(.delete) {
+                self.startWatching()
+            }
         }
 
-        source.setCancelHandler { [fileDescriptor] in
-            close(fileDescriptor)
+        source.setCancelHandler { [fd = fileDescriptor] in
+            close(fd)
         }
 
         source.resume()

@@ -216,7 +216,7 @@ actor SessionScanner {
 
         // Read last 4KB for recent entries
         let fileSize = handle.seekToEndOfFile()
-        let readSize: UInt64 = 4096
+        let readSize: UInt64 = 32768 // 32KB — large entries need more tail data
         let readStart = fileSize > readSize ? fileSize - readSize : 0
         handle.seek(toFileOffset: readStart)
         let data = handle.readDataToEndOfFile()
@@ -257,7 +257,7 @@ actor SessionScanner {
         // Only show sessions where the user has sent a real prompt (cached once confirmed)
         if !realUserMessageSessions.contains(sessionId) {
             handle.seek(toFileOffset: 0)
-            let headData = handle.readData(ofLength: 8192)
+            let headData = handle.readData(ofLength: 1_048_576) // 1MB — first user message can be 675KB+
             guard let headContent = String(data: headData, encoding: .utf8),
                   hasRealUserMessage(in: headContent) else { return nil }
             realUserMessageSessions.insert(sessionId)
